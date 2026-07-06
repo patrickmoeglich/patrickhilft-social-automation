@@ -28,7 +28,7 @@ GitHub Actions (Montag, 08:00 UTC oder manuell)
         │
         ▼
 3. Claude generiert 3 Bildideen, OpenAI erzeugt Bilder,
-   Hosting via Imgur                              (scripts/image_gen.py)
+   Hosting via ImgBB                              (scripts/image_gen.py)
         │
         ▼
 4. Telegram-Bot schickt die 3 Bilder + Buttons:
@@ -109,17 +109,16 @@ Warte-Phasen nacheinander bis zu je 60 Minuten dauern können).
    Account anlegen) und unter **API Keys** einen neuen Key erstellen → das
    ist `ANTHROPIC_API_KEY`.
 
-## Schritt 3b: OpenAI und Imgur für die Bildvorschläge einrichten
+## Schritt 3b: OpenAI und ImgBB für die Bildvorschläge einrichten
 
 1. Auf [platform.openai.com](https://platform.openai.com/api-keys) einen neuen
    API-Key erstellen → das ist `OPENAI_API_KEY`. Die Bildgenerierung
    (`gpt-image-1`) wird pro erzeugtem Bild abgerechnet.
-2. Auf [api.imgur.com/oauth2/addclient](https://api.imgur.com/oauth2/addclient)
-   eine kostenlose Anwendung registrieren (Anwendungstyp "Anonymous usage
-   without user authorization") → die dabei erzeugte **Client-ID** ist dein
-   `IMGUR_CLIENT_ID`. Darüber werden sowohl die KI-generierten Bildvorschläge
-   als auch von dir hochgeladene eigene Bilder öffentlich gehostet, damit Ocoya
-   sie abrufen kann (Ocoya akzeptiert nur öffentliche Bild-URLs, keine
+2. Auf [api.imgbb.com](https://api.imgbb.com/) einloggen (oder Account anlegen)
+   und dort einen kostenlosen API-Key erstellen → das ist `IMGBB_API_KEY`.
+   Darüber werden sowohl die KI-generierten Bildvorschläge als auch von dir
+   hochgeladene eigene Bilder öffentlich gehostet, damit Ocoya sie abrufen kann
+   (Ocoya akzeptiert nur öffentliche Bild-URLs, keine
    Datei-Uploads).
 
 ## Schritt 4: Marken-Briefing ausfüllen
@@ -149,7 +148,7 @@ Nächstes:
    |---|---|
    | `ANTHROPIC_API_KEY` | Anthropic API-Key |
    | `OPENAI_API_KEY` | OpenAI API-Key (Bildgenerierung) |
-   | `IMGUR_CLIENT_ID` | Imgur Client-ID (Bild-Hosting) |
+   | `IMGBB_API_KEY` | ImgBB API-Key (Bild-Hosting) |
    | `TELEGRAM_BOT_TOKEN` | Telegram Bot-Token |
    | `TELEGRAM_CHAT_ID` | Deine Telegram Chat-ID |
    | `OCOYA_API_KEY` | Ocoya API-Key |
@@ -211,7 +210,7 @@ plus Regenerations-Puffer liegen.
 ```
 config/brand.md              Marken-Briefing für Claude
 scripts/generate_post.py     Anthropic API: generiert Thema/Caption/Hashtags + Bildideen
-scripts/image_gen.py         OpenAI API: erzeugt Bilder, Imgur: hostet sie öffentlich
+scripts/image_gen.py         OpenAI API: erzeugt Bilder, ImgBB: hostet sie öffentlich
 scripts/telegram_bot.py      Telegram Bot API: senden, Buttons, Fotos empfangen, Long-Polling
 scripts/ocoya_client.py      Ocoya API: Post erstellen + für Zeitpunkt einplanen
 scripts/list_ocoya_resources.py   Einmaliges lokales Setup-Hilfsskript
