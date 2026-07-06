@@ -60,6 +60,14 @@ class TelegramBot:
     def answer_callback_query(self, callback_query_id: str, text: Optional[str] = None) -> None:
         self._call("answerCallbackQuery", callback_query_id=callback_query_id, text=text)
 
+    def _ack_callback(self, callback_query_id: str) -> None:
+        try:
+            self.answer_callback_query(callback_query_id)
+        except RuntimeError:
+            # Query may already be expired/stale (e.g. a leftover click from a previous run) -
+            # safe to ignore, we still discard/process the underlying update either way.
+            pass
+
     def get_updates(self, offset: int, timeout: int = 25) -> list:
         return self._call(
             "getUpdates",
@@ -107,9 +115,9 @@ class TelegramBot:
                 if callback:
                     if callback.get("message", {}).get("message_id") != message_id:
                         # Stale callback from an older message (e.g. a previous run) - ack and ignore.
-                        self.answer_callback_query(callback["id"])
+                        self._ack_callback(callback["id"])
                         continue
-                    self.answer_callback_query(callback["id"])
+                    self._ack_callback(callback["id"])
                     return ("callback", callback["data"])
                 message = update.get("message")
                 if (
