@@ -39,6 +39,38 @@ def _build_prompt(feedback: Optional[str]) -> str:
     return prompt
 
 
+IMAGE_PROMPTS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "image_prompts": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 3,
+            "maxItems": 3,
+            "description": (
+                "3 unterschiedliche, konkrete Bildbeschreibungen (auf Englisch, fuer ein "
+                "Bildgenerierungsmodell), die sich in Motiv/Perspektive/Stil unterscheiden"
+            ),
+        }
+    },
+    "required": ["image_prompts"],
+    "additionalProperties": False,
+}
+
+
+def _system_prompt(brand_brief: str) -> list:
+    return [
+        {
+            "type": "text",
+            "text": (
+                "Du bist Social-Media-Manager der folgenden Marke. Halte dich exakt an "
+                "dieses Briefing:\n\n" + brand_brief
+            ),
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+
+
 def generate_post(feedback: Optional[str] = None) -> dict:
     """Returns {"topic": str, "caption": str, "hashtags": list[str]}."""
     brand_brief = BRAND_FILE.read_text(encoding="utf-8")
@@ -47,22 +79,40 @@ def generate_post(feedback: Optional[str] = None) -> dict:
     response = client.messages.create(
         model=MODEL,
         max_tokens=1024,
-        system=[
-            {
-                "type": "text",
-                "text": (
-                    "Du bist Social-Media-Manager der folgenden Marke. Halte dich exakt an "
-                    "dieses Briefing:\n\n" + brand_brief
-                ),
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
+        system=_system_prompt(brand_brief),
         output_config={"format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
         messages=[{"role": "user", "content": _build_prompt(feedback)}],
     )
 
     text = next(block.text for block in response.content if block.type == "text")
     return json.loads(text)
+
+
+def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = None) -> list:
+    """Returns 3 English image-generation prompts matching the given post."""
+    brand_brief = BRAND_FILE.read_text(encoding="utf-8")
+
+    prompt = (
+        "Erstelle 3 unterschiedliche Bildideen (als Prompts fuer ein KI-Bildgenerierungsmodell, "
+        "auf Englisch) fuer folgenden Social-Media-Post:\n\n"
+        f"Thema: {topic}\nCaption: {caption}\n\n"
+        "Die 3 Vorschlaege sollen sich in Motiv, Perspektive oder Stil unterscheiden, aber alle "
+        "zum Markenbriefing passen."
+    )
+    if feedback:
+        prompt += f"\n\nFeedback zu den vorherigen Vorschlaegen: \"{feedback}\""
+
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=1024,
+        system=_system_prompt(brand_brief),
+        output_config={"format": {"type": "json_schema", "schema": IMAGE_PROMPTS_SCHEMA}},
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    text = next(block.text for block in response.content if block.type == "text")
+    return json.loads(text)["image_prompts"]
 
 
 if __name__ == "__main__":

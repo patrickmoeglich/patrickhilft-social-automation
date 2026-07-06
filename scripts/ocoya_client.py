@@ -1,4 +1,4 @@
-"""Minimal Ocoya API client (create post as draft, then publish immediately)."""
+"""Minimal Ocoya API client (create post as draft, then schedule it for later)."""
 import os
 from typing import List, Optional
 
@@ -48,20 +48,26 @@ class OcoyaClient:
         response.raise_for_status()
         return response.json()
 
-    def publish_now(self, post_id: str) -> dict:
+    def schedule_post(self, post_id: str, scheduled_at_iso: str) -> dict:
         response = requests.patch(
             f"{BASE_URL}/post/{post_id}",
             headers=self._headers(),
             params={"workspaceId": self.workspace_id},
-            json={"publishNow": True},
+            json={"scheduledAt": scheduled_at_iso},
             timeout=30,
         )
         response.raise_for_status()
         return response.json()
 
-    def create_and_publish(self, caption: str, social_profile_ids: List[str], media_urls: Optional[List[str]] = None) -> dict:
+    def create_and_schedule(
+        self,
+        caption: str,
+        social_profile_ids: List[str],
+        scheduled_at_iso: str,
+        media_urls: Optional[List[str]] = None,
+    ) -> dict:
         draft = self.create_draft_post(caption, social_profile_ids, media_urls)
         post_id = draft.get("id") or draft.get("_id")
         if not post_id:
             raise RuntimeError(f"Ocoya-Antwort enthielt keine Post-ID: {draft}")
-        return self.publish_now(post_id)
+        return self.schedule_post(post_id, scheduled_at_iso)

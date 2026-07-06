@@ -1,9 +1,11 @@
 # Wöchentliche Social-Media-Automatisierung
 
-Jeden Montag generiert Claude (Anthropic API) einen Post-Entwurf, schickt ihn dir
-per Telegram-Bot zur Freigabe, und veröffentlicht ihn nach deinem "✅ Freigeben"
-über [Ocoya](https://ocoya.com) auf Instagram, LinkedIn, Facebook und X.
-Alles läuft in einem einzigen GitHub-Actions-Workflow — kein eigener Server nötig.
+Jeden Montag generiert Claude (Anthropic API) einen Post-Text, schickt ihn dir per
+Telegram-Bot zur Freigabe, generiert danach 3 KI-Bildvorschläge (OpenAI) zur Auswahl —
+oder du lädst stattdessen dein eigenes Bild hoch — und plant den fertigen Post danach
+über [Ocoya](https://ocoya.com) für einen festen Zeitpunkt ein (Instagram, LinkedIn,
+Facebook, X). Alles läuft in einem einzigen GitHub-Actions-Workflow — kein eigener
+Server nötig.
 
 ## Wie der Ablauf funktioniert
 
@@ -11,29 +13,49 @@ Alles läuft in einem einzigen GitHub-Actions-Workflow — kein eigener Server n
 GitHub Actions (Montag, 08:00 UTC oder manuell)
         │
         ▼
-1. Claude generiert Thema + Caption + Hashtags   (scripts/generate_post.py)
+1. Claude generiert Thema + Caption + Hashtags     (scripts/generate_post.py)
         │
         ▼
-2. Telegram-Bot schickt Entwurf mit Buttons:
-   ✅ Freigeben   🔄 Neu generieren   ❌ Abbrechen  (scripts/telegram_bot.py)
-        │
-        ▼
-3. Workflow wartet (Long-Polling, bis zu 60 Min.) auf deine Antwort
+2. Telegram-Bot schickt Text-Entwurf mit Buttons:
+   ✅ Freigeben   🔄 Neu generieren   ❌ Abbrechen   (scripts/telegram_bot.py)
         │
    ┌────┴─────────────┬──────────────────┐
    ✅ Freigeben        🔄 Neu generieren   ❌ / Timeout
         │                  │                  │
         ▼                  ▼                  ▼
-4. Ocoya postet    zurück zu Schritt 1    Workflow endet,
-   auf allen        (max. 4x)             nichts wird gepostet
-   Plattformen           
+   weiter zu 3.       zurück zu 1.        Workflow endet,
+                       (max. 4x)          nichts wird gepostet
         │
         ▼
-5. Telegram-Nachricht wird zu "✅ Veröffentlicht!" bearbeitet
+3. Claude generiert 3 Bildideen, OpenAI erzeugt Bilder,
+   Hosting via Imgur                              (scripts/image_gen.py)
+        │
+        ▼
+4. Telegram-Bot schickt die 3 Bilder + Buttons:
+   1️⃣/2️⃣/3️⃣ Bild wählen   📤 Eigenes Bild hochladen
+   🔄 Neue Vorschläge   ❌ Abbrechen
+        │
+   ┌────┴─────┬──────────────────┬───────────────────┐
+   Bild wählen 📤 Eigenes Bild    🔄 Neue Vorschläge   ❌ / Timeout
+        │      hochladen         (max. 2x)                │
+        │         │                  │                    │
+        ▼         ▼                  ▼                    ▼
+   weiter zu 5.  Bild als Foto   zurück zu 3.        Workflow endet,
+                 an den Chat                        nichts wird gepostet
+                 senden → weiter
+                 zu 5.
+        │
+        ▼
+5. Ocoya erstellt den Post (Text + Bild) und plant ihn für den
+   nächsten Tag, 10:00 Uhr (konfigurierbar), ein
+        │
+        ▼
+6. Telegram-Nachricht zeigt "✅ Post eingeplant für <Datum/Zeit>!"
 ```
 
 Es gibt **keinen separaten Server/Webhook** — der GitHub-Actions-Job selbst
-pollt Telegram, solange er läuft (Job-Timeout: 75 Minuten).
+pollt Telegram, solange er läuft (Job-Timeout: 180 Minuten, da bis zu 3
+Warte-Phasen nacheinander bis zu je 60 Minuten dauern können).
 
 ---
 
@@ -87,6 +109,19 @@ pollt Telegram, solange er läuft (Job-Timeout: 75 Minuten).
    Account anlegen) und unter **API Keys** einen neuen Key erstellen → das
    ist `ANTHROPIC_API_KEY`.
 
+## Schritt 3b: OpenAI und Imgur für die Bildvorschläge einrichten
+
+1. Auf [platform.openai.com](https://platform.openai.com/api-keys) einen neuen
+   API-Key erstellen → das ist `OPENAI_API_KEY`. Die Bildgenerierung
+   (`gpt-image-1`) wird pro erzeugtem Bild abgerechnet.
+2. Auf [api.imgur.com/oauth2/addclient](https://api.imgur.com/oauth2/addclient)
+   eine kostenlose Anwendung registrieren (Anwendungstyp "Anonymous usage
+   without user authorization") → die dabei erzeugte **Client-ID** ist dein
+   `IMGUR_CLIENT_ID`. Darüber werden sowohl die KI-generierten Bildvorschläge
+   als auch von dir hochgeladene eigene Bilder öffentlich gehostet, damit Ocoya
+   sie abrufen kann (Ocoya akzeptiert nur öffentliche Bild-URLs, keine
+   Datei-Uploads).
+
 ## Schritt 4: Marken-Briefing ausfüllen
 
 Öffne [`config/brand.md`](config/brand.md) und fülle es aus (Marke, Zielgruppe,
@@ -113,6 +148,8 @@ Nächstes:
    | Secret-Name | Wert |
    |---|---|
    | `ANTHROPIC_API_KEY` | Anthropic API-Key |
+   | `OPENAI_API_KEY` | OpenAI API-Key (Bildgenerierung) |
+   | `IMGUR_CLIENT_ID` | Imgur Client-ID (Bild-Hosting) |
    | `TELEGRAM_BOT_TOKEN` | Telegram Bot-Token |
    | `TELEGRAM_CHAT_ID` | Deine Telegram Chat-ID |
    | `OCOYA_API_KEY` | Ocoya API-Key |
@@ -128,11 +165,15 @@ Nächstes:
 1. Im GitHub-Repo unter **Actions → Weekly Social Media Post → Run workflow**
    den Workflow manuell auslösen (`workflow_dispatch`).
 2. Innerhalb weniger Sekunden solltest du im Telegram-Chat mit deinem Bot einen
-   Post-Entwurf mit drei Buttons sehen.
+   Text-Entwurf mit drei Buttons sehen.
 3. Zum Testen einmal auf **🔄 Neu generieren** klicken (neuer Entwurf erscheint),
-   danach auf **✅ Freigeben** — der Post wird über Ocoya veröffentlicht und die
-   Telegram-Nachricht zeigt "✅ Veröffentlicht!".
-4. Den Fortschritt/Logs siehst du im GitHub-Actions-Lauf.
+   danach auf **✅ Freigeben**.
+4. Kurz danach schickt der Bot 3 KI-generierte Bildvorschläge sowie Buttons zur
+   Auswahl. Wähle eins der Bilder, oder klicke auf **📤 Eigenes Bild hochladen**
+   und schicke danach ein Foto in den Chat.
+5. Der Post wird mit Text + gewähltem Bild über Ocoya eingeplant, und die
+   Telegram-Nachricht zeigt "✅ Post eingeplant für ...!".
+6. Den Fortschritt/Logs siehst du im GitHub-Actions-Lauf.
 
 Danach läuft der Workflow automatisch jeden **Montag um 08:00 UTC**
 (anpassbar über die `cron`-Zeile in `.github/workflows/weekly-post.yml`).
@@ -154,18 +195,25 @@ python main.py
 
 | Umgebungsvariable | Bedeutung | Default |
 |---|---|---|
-| `POLL_TIMEOUT_MINUTES` | Wie lange auf deine Telegram-Antwort gewartet wird | `60` |
-| `MAX_REGENERATIONS` | Max. Anzahl "Neu generieren"-Klicks pro Lauf | `4` |
+| `POLL_TIMEOUT_MINUTES` | Wie lange pro Schritt auf deine Telegram-Antwort gewartet wird | `60` |
+| `MAX_REGENERATIONS` | Max. Anzahl "Neu generieren"-Klicks (Text) pro Lauf | `4` |
+| `MAX_IMAGE_REGENERATIONS` | Max. Anzahl "Neue Vorschläge"-Klicks (Bilder) pro Lauf | `2` |
+| `POST_SCHEDULE_HOUR` | Uhrzeit (lokale Stunde), für die der Post am nächsten Tag eingeplant wird | `10` |
+| `POST_SCHEDULE_TIMEZONE` | Zeitzone für `POST_SCHEDULE_HOUR` | `Europe/Berlin` |
 
 Diese können in `.github/workflows/weekly-post.yml` unter `env:` angepasst werden.
+Da die Warte-Phasen (Text-Freigabe, Bildauswahl, ggf. Foto-Upload) nacheinander
+laufen, sollte `timeout-minutes` des Jobs großzügig über `POLL_TIMEOUT_MINUTES × 3`
+plus Regenerations-Puffer liegen.
 
 ## Projektstruktur
 
 ```
 config/brand.md              Marken-Briefing für Claude
-scripts/generate_post.py     Anthropic API: generiert Thema/Caption/Hashtags
-scripts/telegram_bot.py      Telegram Bot API: senden, Buttons, Long-Polling
-scripts/ocoya_client.py      Ocoya API: Post erstellen + sofort veröffentlichen
+scripts/generate_post.py     Anthropic API: generiert Thema/Caption/Hashtags + Bildideen
+scripts/image_gen.py         OpenAI API: erzeugt Bilder, Imgur: hostet sie öffentlich
+scripts/telegram_bot.py      Telegram Bot API: senden, Buttons, Fotos empfangen, Long-Polling
+scripts/ocoya_client.py      Ocoya API: Post erstellen + für Zeitpunkt einplanen
 scripts/list_ocoya_resources.py   Einmaliges lokales Setup-Hilfsskript
 scripts/main.py               Orchestriert den gesamten Ablauf
 .github/workflows/weekly-post.yml  Wöchentlicher Cron-Job + manueller Trigger

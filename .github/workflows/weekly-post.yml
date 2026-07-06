@@ -12,7 +12,9 @@ permissions:
 jobs:
   generate-and-post:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    # 3 Warte-Phasen (Text-Freigabe, Bildauswahl, ggf. eigenes Bild hochladen) a bis zu
+    # POLL_TIMEOUT_MINUTES, plus Puffer fuer Generierung/Regenerationen.
+    timeout-minutes: 180
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -25,10 +27,12 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: pip install -r requirements.txt
 
-      - name: Post generieren, freigeben lassen und veroeffentlichen
+      - name: Post generieren, freigeben lassen und einplanen
         working-directory: scripts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           OCOYA_API_KEY: ${{ secrets.OCOYA_API_KEY }}
@@ -36,4 +40,7 @@ jobs:
           OCOYA_SOCIAL_PROFILE_IDS: ${{ secrets.OCOYA_SOCIAL_PROFILE_IDS }}
           POLL_TIMEOUT_MINUTES: "60"
           MAX_REGENERATIONS: "4"
+          MAX_IMAGE_REGENERATIONS: "2"
+          POST_SCHEDULE_HOUR: "10"
+          POST_SCHEDULE_TIMEZONE: "Europe/Berlin"
         run: python main.py
