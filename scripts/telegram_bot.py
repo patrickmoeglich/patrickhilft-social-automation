@@ -17,8 +17,11 @@ class TelegramBot:
     def _call(self, method: str, **params) -> dict:
         url = API_BASE.format(token=self.token, method=method)
         response = requests.post(url, json=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError:
+            response.raise_for_status()
+            raise
         if not data.get("ok"):
             raise RuntimeError(f"Telegram API error on {method}: {data}")
         return data["result"]
