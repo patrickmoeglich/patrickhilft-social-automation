@@ -16,7 +16,8 @@ class TelegramBot:
 
     def _call(self, method: str, **params) -> dict:
         url = API_BASE.format(token=self.token, method=method)
-        response = requests.post(url, json=params, timeout=30)
+        payload = {key: value for key, value in params.items() if value is not None}
+        response = requests.post(url, json=payload, timeout=30)
         try:
             data = response.json()
         except ValueError:
