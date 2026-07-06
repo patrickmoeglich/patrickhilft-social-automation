@@ -19,7 +19,8 @@ def _generate_image_bytes(prompt: str) -> bytes:
         json={"model": IMAGE_MODEL, "prompt": prompt, "size": IMAGE_SIZE, "n": 1},
         timeout=120,
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(f"OpenAI-Bildgenerierung fehlgeschlagen ({response.status_code}): {response.text}")
     return base64.b64decode(response.json()["data"][0]["b64_json"])
 
 
@@ -31,7 +32,8 @@ def upload_to_imgbb(image_bytes: bytes) -> str:
         data={"image": base64.b64encode(image_bytes).decode("ascii")},
         timeout=60,
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(f"ImgBB-Upload fehlgeschlagen ({response.status_code}): {response.text}")
     data = response.json()
     if not data.get("success"):
         raise RuntimeError(f"ImgBB-Upload fehlgeschlagen: {data}")
