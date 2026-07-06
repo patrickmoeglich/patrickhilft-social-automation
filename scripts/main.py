@@ -2,7 +2,7 @@
 
 1. Claude generiert einen Text-Entwurf (Thema + Caption + Hashtags)
 2. Der Text wird per Telegram zur Freigabe geschickt (Freigeben / Neu generieren / Abbrechen)
-3. Nach Freigabe generiert Claude 3 Bildideen, OpenAI erzeugt dazu Bilder (gehostet auf Imgur)
+3. Nach Freigabe generiert Claude 3 Bildideen, OpenAI erzeugt dazu Bilder (gehostet auf ImgBB)
 4. Die 3 Bilder werden per Telegram geschickt - Auswahl eines Bildes, eigenes Bild hochladen,
    neue Vorschlaege anfordern, oder abbrechen
 5. Der Post wird mit Text + gewaehltem Bild ueber Ocoya fuer einen festen Zeitpunkt eingeplant
@@ -16,7 +16,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from generate_post import generate_image_prompts, generate_post
-from image_gen import generate_image_suggestions, upload_to_imgur
+from image_gen import generate_image_suggestions, upload_to_imgbb
 from ocoya_client import OcoyaClient
 from telegram_bot import TelegramBot, approval_keyboard, image_choice_keyboard
 
@@ -184,7 +184,7 @@ def _select_image(bot: TelegramBot, draft: dict) -> Optional[str]:
 
             file_path = bot.get_file_path(upload_value)
             image_bytes = bot.download_file(file_path)
-            return upload_to_imgur(image_bytes)
+            return upload_to_imgbb(image_bytes)
 
         # Unbekannte/veraltete Callback-Daten - ignorieren und weiter warten.
 
