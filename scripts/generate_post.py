@@ -39,21 +39,25 @@ def _build_prompt(feedback: Optional[str]) -> str:
     return prompt
 
 
+# Anthropics json_schema-Output unterstuetzt fuer Arrays nur minItems/maxItems von 0 oder 1,
+# daher werden die 3 Bildideen als einzelne Felder statt als Array fester Laenge modelliert.
 IMAGE_PROMPTS_SCHEMA = {
     "type": "object",
     "properties": {
-        "image_prompts": {
-            "type": "array",
-            "items": {"type": "string"},
-            "minItems": 3,
-            "maxItems": 3,
-            "description": (
-                "3 unterschiedliche, konkrete Bildbeschreibungen (auf Englisch, fuer ein "
-                "Bildgenerierungsmodell), die sich in Motiv/Perspektive/Stil unterscheiden"
-            ),
-        }
+        "image_prompt_1": {
+            "type": "string",
+            "description": "Bildidee 1: konkrete Bildbeschreibung auf Englisch fuer ein Bildgenerierungsmodell",
+        },
+        "image_prompt_2": {
+            "type": "string",
+            "description": "Bildidee 2: unterscheidet sich von Idee 1 in Motiv, Perspektive oder Stil",
+        },
+        "image_prompt_3": {
+            "type": "string",
+            "description": "Bildidee 3: unterscheidet sich von Idee 1 und 2 in Motiv, Perspektive oder Stil",
+        },
     },
-    "required": ["image_prompts"],
+    "required": ["image_prompt_1", "image_prompt_2", "image_prompt_3"],
     "additionalProperties": False,
 }
 
@@ -112,7 +116,8 @@ def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = N
     )
 
     text = next(block.text for block in response.content if block.type == "text")
-    return json.loads(text)["image_prompts"]
+    data = json.loads(text)
+    return [data["image_prompt_1"], data["image_prompt_2"], data["image_prompt_3"]]
 
 
 if __name__ == "__main__":
