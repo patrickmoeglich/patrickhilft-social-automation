@@ -5,6 +5,7 @@ from typing import List, Optional
 import requests
 
 BASE_URL = "https://app.ocoya.com/api/_public/v1"
+ERROR_BODY_LIMIT = 500
 
 
 class OcoyaClient:
@@ -23,10 +24,18 @@ class OcoyaClient:
             "Accept": "application/json",
         }
 
+    @staticmethod
+    def _check(response: requests.Response) -> dict:
+        if not response.ok:
+            raise RuntimeError(
+                f"Ocoya-API-Fehler ({response.status_code}) fuer {response.url}: "
+                f"{response.text[:ERROR_BODY_LIMIT]}"
+            )
+        return response.json()
+
     def list_workspaces(self) -> list:
         response = requests.get(f"{BASE_URL}/workspaces", headers=self._headers(), timeout=30)
-        response.raise_for_status()
-        return response.json()
+        return self._check(response)
 
     def list_social_profiles(self) -> list:
         response = requests.get(
@@ -35,8 +44,7 @@ class OcoyaClient:
             params={"workspaceId": self.workspace_id},
             timeout=30,
         )
-        response.raise_for_status()
-        return response.json()
+        return self._check(response)
 
     def create_draft_post(self, caption: str, social_profile_ids: List[str], media_urls: Optional[List[str]] = None) -> dict:
         body = {"caption": caption, "socialProfileIds": social_profile_ids}
@@ -49,8 +57,7 @@ class OcoyaClient:
             json=body,
             timeout=30,
         )
-        response.raise_for_status()
-        return response.json()
+        return self._check(response)
 
     def schedule_post(self, post_id: str, scheduled_at_iso: str) -> dict:
         response = requests.patch(
@@ -60,8 +67,7 @@ class OcoyaClient:
             json={"scheduledAt": scheduled_at_iso},
             timeout=30,
         )
-        response.raise_for_status()
-        return response.json()
+        return self._check(response)
 
     def create_and_schedule(
         self,
