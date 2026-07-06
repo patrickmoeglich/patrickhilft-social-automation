@@ -47,15 +47,23 @@ class TelegramBot:
             reply_markup=reply_markup,
         )
 
-    def send_media_group(self, photo_urls: List[str], caption: str = "") -> List[int]:
+    def send_media_group(self, photo_urls: List[str], caption: str = "", max_retries: int = 3) -> List[int]:
         media = []
         for i, url in enumerate(photo_urls):
             item = {"type": "photo", "media": url}
             if i == 0 and caption:
                 item["caption"] = caption
             media.append(item)
-        result = self._call("sendMediaGroup", chat_id=self.chat_id, media=media)
-        return [message["message_id"] for message in result]
+        for attempt in range(1, max_retries + 1):
+            try:
+                result = self._call("sendMediaGroup", chat_id=self.chat_id, media=media)
+                return [message["message_id"] for message in result]
+            except RuntimeError as exc:
+                # Telegram occasionally fails to fetch a freshly uploaded image URL
+                # (e.g. CDN propagation delay) - worth a short retry before giving up.
+                if "WEBPAGE_CURL_FAILED" not in str(exc) or attempt == max_retries:
+                    raise
+                time.sleep(3 * attempt)
 
     def answer_callback_query(self, callback_query_id: str, text: Optional[str] = None) -> None:
         self._call("answerCallbackQuery", callback_query_id=callback_query_id, text=text)
