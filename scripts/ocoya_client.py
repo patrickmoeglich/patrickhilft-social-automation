@@ -77,7 +77,7 @@ class OcoyaClient:
         media_urls: Optional[List[str]] = None,
     ) -> dict:
         draft = self.create_draft_post(caption, social_profile_ids, media_urls)
-        post_id = draft.get("id") or draft.get("_id")
+        post_id = draft.get("postGroupId") or draft.get("id") or draft.get("_id")
         if not post_id:
             raise RuntimeError(f"Ocoya-Antwort enthielt keine Post-ID: {draft}")
         return self.schedule_post(post_id, scheduled_at_iso)
