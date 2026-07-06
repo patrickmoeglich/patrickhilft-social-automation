@@ -11,6 +11,10 @@ class OcoyaClient:
     def __init__(self, api_key: Optional[str] = None, workspace_id: Optional[str] = None):
         self.api_key = api_key or os.environ["OCOYA_API_KEY"]
         self.workspace_id = workspace_id or os.environ["OCOYA_WORKSPACE_ID"]
+        if not self.api_key:
+            raise RuntimeError("OCOYA_API_KEY ist leer - GitHub Secret pruefen/neu setzen.")
+        if not self.workspace_id:
+            raise RuntimeError("OCOYA_WORKSPACE_ID ist leer - GitHub Secret pruefen/neu setzen.")
 
     def _headers(self) -> dict:
         return {
