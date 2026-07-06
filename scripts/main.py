@@ -30,6 +30,16 @@ REGENERATE_FEEDBACK = (
     "andere Formulierung, ggf. anderes Unterthema."
 )
 REGENERATE_IMAGE_FEEDBACK = "Bitte spuerbar andere Motive, Perspektiven oder Stile vorschlagen."
+# Telegram-Nachrichten sind auf 4096 Zeichen begrenzt; lange Fehlertexte (z.B. HTML-Fehlerseiten
+# von APIs) werden gekuerzt, damit die Fehlermeldung selbst zuverlaessig zugestellt wird.
+TELEGRAM_ERROR_TEXT_LIMIT = 3000
+
+
+def _error_text(exc: Exception) -> str:
+    text = str(exc)
+    if len(text) > TELEGRAM_ERROR_TEXT_LIMIT:
+        text = text[:TELEGRAM_ERROR_TEXT_LIMIT] + "\n... (gekürzt)"
+    return html.escape(text)
 
 
 def _format_message(draft: dict) -> str:
@@ -75,7 +85,7 @@ def _approve_text(bot: TelegramBot) -> Optional[dict]:
     try:
         draft = generate_post()
     except Exception as exc:
-        bot.send_message(f"🚨 <b>Fehler bei der Post-Generierung:</b>\n{html.escape(str(exc))}")
+        bot.send_message(f"🚨 <b>Fehler bei der Post-Generierung:</b>\n{_error_text(exc)}")
         raise
 
     message_id = bot.send_message(_format_message(draft), reply_markup=approval_keyboard())
@@ -199,7 +209,7 @@ def main() -> int:
     try:
         media_url = _select_image(bot, draft)
     except Exception as exc:
-        bot.send_message(f"🚨 <b>Fehler bei der Bildauswahl:</b>\n{html.escape(str(exc))}")
+        bot.send_message(f"🚨 <b>Fehler bei der Bildauswahl:</b>\n{_error_text(exc)}")
         raise
     if media_url is None:
         return 0
@@ -213,7 +223,7 @@ def main() -> int:
             media_urls=[media_url],
         )
     except Exception as exc:
-        bot.send_message(f"🚨 <b>Fehler beim Einplanen:</b>\n{html.escape(str(exc))}")
+        bot.send_message(f"🚨 <b>Fehler beim Einplanen:</b>\n{_error_text(exc)}")
         raise
 
     bot.send_message(f"✅ <b>Post eingeplant für {scheduled_at.strftime('%d.%m.%Y %H:%M %Z')}!</b>")
