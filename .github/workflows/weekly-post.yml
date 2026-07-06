@@ -1,0 +1,39 @@
+name: Weekly Social Media Post
+
+on:
+  schedule:
+    # Montags 08:00 UTC (= 09:00/10:00 MEZ/MESZ)
+    - cron: "0 8 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhaengigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Post generieren, freigeben lassen und veroeffentlichen
+        working-directory: scripts
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OCOYA_API_KEY: ${{ secrets.OCOYA_API_KEY }}
+          OCOYA_WORKSPACE_ID: ${{ secrets.OCOYA_WORKSPACE_ID }}
+          OCOYA_SOCIAL_PROFILE_IDS: ${{ secrets.OCOYA_SOCIAL_PROFILE_IDS }}
+          POLL_TIMEOUT_MINUTES: "60"
+          MAX_REGENERATIONS: "4"
+        run: python main.py
