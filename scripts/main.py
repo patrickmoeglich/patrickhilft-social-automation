@@ -68,7 +68,10 @@ def _caption_with_tags(draft: dict) -> str:
 
 def _social_profile_ids() -> list:
     raw = os.environ["OCOYA_SOCIAL_PROFILE_IDS"]
-    return [pid.strip() for pid in raw.split(",") if pid.strip()]
+    ids = [pid.strip().strip("[]\"'") for pid in raw.split(",")]
+    ids = [pid for pid in ids if pid]
+    print(f"OCOYA_SOCIAL_PROFILE_IDS geparst ({len(ids)}): {ids}")
+    return ids
 
 
 def _next_schedule_time() -> datetime:
