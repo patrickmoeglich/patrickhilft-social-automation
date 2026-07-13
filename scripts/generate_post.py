@@ -1,13 +1,47 @@
 """Generates a social media post draft (topic, caption, hashtags) via the Anthropic API."""
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import anthropic
 
 MODEL = "claude-opus-4-8"
 BRAND_FILE = Path(__file__).resolve().parent.parent / "config" / "brand.md"
+
+# Feste Themenliste aus den drei Leistungsbereichen von patrickhilft.de.
+# Es wird pro Woche automatisch EIN Thema ausgewaehlt (siehe _pick_weekly_topic),
+# damit sich die Posts abwechseln und nicht immer dasselbe Thema kommt.
+WEEKLY_TOPICS = [
+    "Haushaltshilfe: Unterstuetzung beim Putzen, Aufraeumen und bei der Waesche im Alltag",
+    "Einkaeufe und Botengaenge abnehmen, wenn der Weg zum Supermarkt schwerfaellt",
+    "Alltagsbegleitung: Gesellschaft leisten und Zeit gegen Einsamkeit schenken",
+    "Gemeinsame Spaziergaenge an der frischen Luft",
+    "Gassi-Service und Hilfe mit Haustieren (Hunde, Katzen, Kleintiere)",
+    "Begleitung zu Aemtern und Behoerden - Termine gemeinsam meistern",
+    "Sichere Fahrten mit dem behindertengerechten V-Class inkl. Rollstuhl-Hublift",
+    "Entlastung fuer pflegende Angehoerige - eine verlaessliche Auszeit",
+    "Begleitung zu Arztterminen und Untersuchungen",
+    "Persoenliche Betreuung: da sein, zuhoeren, den Tag strukturieren",
+    "Unterstuetzung fuer Familien im turbulenten Alltag",
+    "Flexible Alltagshilfe - individuell nach Bedarf statt Standardpaket",
+]
+
+# Zaehlt hoch, wenn im selben Lauf per "Neu generieren" ein anderer Entwurf angefordert wird,
+# damit dann auch ein anderes Thema gewaehlt wird (nicht nur eine andere Formulierung).
+_topic_offset = 0
+
+
+def _pick_weekly_topic(regenerating: bool) -> str:
+    """Waehlt das Thema fuer diese Woche. Bei 'Neu generieren' rueckt es ein Thema weiter."""
+    global _topic_offset
+    if regenerating:
+        _topic_offset += 1
+    week = datetime.now(ZoneInfo("Europe/Berlin")).isocalendar().week
+    return WEEKLY_TOPICS[(week + _topic_offset) % len(WEEKLY_TOPICS)]
+
 
 OUTPUT_SCHEMA = {
     "type": "object",
@@ -25,16 +59,19 @@ OUTPUT_SCHEMA = {
 }
 
 
-def _build_prompt(feedback: Optional[str]) -> str:
+def _build_prompt(topic_hint: str, feedback: Optional[str]) -> str:
     prompt = (
-        "Erstelle einen neuen Social-Media-Post-Entwurf für diese Woche. "
-        "Wähle selbst ein passendes, aktuelles Thema aus den erlaubten Themenfeldern. "
-        "Halte dich strikt an Tonalität und Format-Vorgaben aus dem Briefing."
+        "Erstelle einen neuen Social-Media-Post-Entwurf für diese Woche.\n\n"
+        f"Das Thema für diesen Post ist fest vorgegeben:\n{topic_hint}\n\n"
+        "Schreibe konkret und lebendig zu genau diesem Thema. Bleib beim vorgegebenen Thema "
+        "und weiche nicht automatisch auf Arzttermine oder Fahrdienste aus, wenn das Thema "
+        "etwas anderes vorgibt. Halte dich strikt an Tonalität und Format-Vorgaben aus dem Briefing."
     )
     if feedback:
         prompt += (
             "\n\nDer vorherige Entwurf wurde abgelehnt. Feedback dazu: "
-            f"\"{feedback}\"\nBerücksichtige dieses Feedback bei der neuen Version."
+            f"\"{feedback}\"\nBerücksichtige dieses Feedback und wähle einen anderen "
+            "Blickwinkel als zuvor."
         )
     return prompt
 
@@ -78,6 +115,7 @@ def _system_prompt(brand_brief: str) -> list:
 def generate_post(feedback: Optional[str] = None) -> dict:
     """Returns {"topic": str, "caption": str, "hashtags": list[str]}."""
     brand_brief = BRAND_FILE.read_text(encoding="utf-8")
+    topic_hint = _pick_weekly_topic(regenerating=feedback is not None)
 
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     response = client.messages.create(
@@ -85,7 +123,7 @@ def generate_post(feedback: Optional[str] = None) -> dict:
         max_tokens=1024,
         system=_system_prompt(brand_brief),
         output_config={"format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
-        messages=[{"role": "user", "content": _build_prompt(feedback)}],
+        messages=[{"role": "user", "content": _build_prompt(topic_hint, feedback)}],
     )
 
     text = next(block.text for block in response.content if block.type == "text")
