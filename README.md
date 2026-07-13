@@ -215,8 +215,152 @@ scripts/telegram_bot.py      Telegram Bot API: senden, Buttons, Fotos empfangen,
 scripts/ocoya_client.py      Ocoya API: Post erstellen + für Zeitpunkt einplanen
 scripts/list_ocoya_resources.py   Einmaliges lokales Setup-Hilfsskript
 scripts/main.py               Orchestriert den gesamten Ablauf
+scripts/lead_finder.py        Eigenständiges Lead-Finder-Skript (siehe Abschnitt oben)
+config/leadgen_offer.md       Angebots-Briefing für den Lead-Finder
+leads/                        Prospect-/Ergebnis-CSVs (bis auf das Beispiel gitignored)
 .github/workflows/weekly-post.yml  Wöchentlicher Cron-Job + manueller Trigger
+
+scripts/daily/                 Eigenständiges tägliches Programm (kein Ocoya, keine Freigabe)
+scripts/daily/generate_content.py  Anthropic API: Text + 3 Bildideen + Video-Overlay-Text
+scripts/daily/image_gen.py     OpenAI API: erzeugt Bilder, Cloudinary hostet sie öffentlich
+scripts/daily/video_gen.py     ffmpeg: rendert vertikales Reel/TikTok-Video aus den Bildern
+scripts/daily/cloudinary_client.py  Bild-/Video-Hosting für alle Plattformen
+scripts/daily/notify.py        Optionale Telegram-Ergebnis-Zusammenfassung (kein Gate)
+scripts/daily/check_setup.py   Prüft Plattform-Credentials ohne zu posten
+scripts/daily/publishers/      Ein Client je Plattform (meta, linkedin, twitter, tiktok)
+scripts/daily/main.py          Orchestriert den gesamten täglichen Ablauf
+.github/workflows/daily-post.yml   Täglicher Cron-Job + manueller Trigger
 ```
+
+## Tägliche Automatisierung (direkte Plattform-APIs, ohne Freigabe)
+
+Neben dem obigen wöchentlichen Freigabe-Workflow gibt es ein **zweites, komplett
+unabhängiges Programm** unter [`scripts/daily/`](scripts/daily/): Es generiert
+**täglich** per Claude einen Post (Text + 3 Bildideen), erzeugt daraus per OpenAI
+3 Bilder sowie ein kurzes vertikales Reel/TikTok-Video (ffmpeg: Ken-Burns-Effekt +
+Crossfades + Text-Overlay, kein Musik-Layer wegen Urheberrecht), und postet **direkt
+über die jeweiligen Plattform-APIs** (Meta Graph API, LinkedIn, X, TikTok) — **ohne**
+Ocoya und **ohne** manuellen Freigabeschritt. Läuft täglich über
+[`.github/workflows/daily-post.yml`](.github/workflows/daily-post.yml).
+
+**Wichtig, weil es keine Freigabe gibt:** Der generierte Text wird ungeprüft
+veröffentlicht. `config/brand.md` (Tonalität, Tabu-Themen) wird zwar bei jedem Lauf
+beachtet, aber es lohnt sich, die ersten Läufe engmaschig zu beobachten (Telegram-
+Zusammenfassung, siehe unten) und ggf. `ENABLED_PLATFORMS` erstmal auf eine einzelne
+Plattform zu beschränken.
+
+### Warum direkte APIs mehr Aufwand bedeuten als Ocoya
+
+Jede Plattform braucht eine **eigene Developer-App + eigenes Token**, die du selbst
+einrichten musst (das kann ich nicht für dich per OAuth-Flow erledigen):
+
+| Plattform | Aufwand | Einschränkung |
+|---|---|---|
+| **Instagram + Facebook** (Meta Graph API) | Meta-App (Typ "Business") anlegen, Instagram-Konto mit Facebook-Seite verbinden, Page-Access-Token generieren | Kein App Review nötig, solange du selbst Admin/Tester der App bist |
+| **LinkedIn** | LinkedIn-App anlegen, Produkt "Share on LinkedIn" aktivieren, einmalig OAuth durchklicken | Self-Serve, kein Review — aber Access Token läuft nach **~60 Tagen** ab und muss manuell erneuert werden |
+| **X (Twitter)** | Developer-App mit "Read and Write" + OAuth 1.0a anlegen | Free-Tier: 500 Posts/Monat (reicht für 1x täglich) |
+| **TikTok** | Developer-App mit Produkt "Content Posting API" (Scope `video.publish`) anlegen | **Ohne App-Audit nur `SELF_ONLY`** (privater Entwurf, nur für dich sichtbar) — für öffentliches Posten ist ein TikTok-Audit nötig, das mehrere Tage dauern kann |
+
+Du musst nicht alle vier einrichten — `ENABLED_PLATFORMS` bestimmt, welche
+tatsächlich angesprochen werden.
+
+### Einrichtung
+
+1. **Cloudinary** (Bild- + Video-Hosting) unter [cloudinary.com](https://cloudinary.com/)
+   registrieren (Free-Tier reicht), Cloud Name/API Key/API Secret notieren.
+2. Für jede gewünschte Plattform die jeweilige Developer-App gemäß Tabelle oben
+   einrichten und die Tokens besorgen (Docstrings in
+   `scripts/daily/publishers/*.py` enthalten die genauen Setup-Schritte pro Datei).
+3. Lokal testen, ohne dass irgendetwas gepostet wird:
+   ```bash
+   cd scripts/daily
+   pip install -r ../../requirements.txt
+   export $(grep -v '^#' ../../.env | xargs)   # .env vorher ausfuellen
+   python main.py --dry-run
+   ```
+   Prüft, dass Text, Bilder und Video korrekt erzeugt werden.
+4. Sobald erste Plattform-Tokens hinterlegt sind, Gültigkeit prüfen:
+   ```bash
+   python check_setup.py
+   ```
+5. Im GitHub-Repo unter **Settings → Secrets and variables → Actions**:
+   - **Secrets:** alle in [`.env.example`](.env.example) gelisteten Keys/Tokens
+     (`CLOUDINARY_*`, `META_*`, `LINKEDIN_*`, `X_*`, `TIKTOK_ACCESS_TOKEN`,
+     optional `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` für die
+     Ergebnis-Benachrichtigung).
+   - **Variables:** `ENABLED_PLATFORMS` (z.B. `instagram_feed,linkedin`) und
+     optional `TIKTOK_PRIVACY_LEVEL`.
+6. Workflow **Daily Social Media Post** einmal manuell über `workflow_dispatch`
+   auslösen und im Actions-Log sowie auf der echten Plattform prüfen, dass der
+   Post ankommt.
+
+Danach läuft der Workflow automatisch **jeden Tag um 08:00 UTC** (anpassbar über
+die `cron`-Zeile in `.github/workflows/daily-post.yml`).
+
+### Gültige `ENABLED_PLATFORMS`-Werte
+
+`instagram_feed`, `instagram_reel`, `facebook_feed`, `facebook_video`,
+`linkedin`, `linkedin_video`, `twitter`, `twitter_video`, `tiktok`
+(komma-getrennt, beliebige Kombination).
+
+## Lead-Finder (eigenes Social-Media-Management-Angebot akquirieren)
+
+`scripts/lead_finder.py` ist ein separates Hilfsskript für ein eigenes Vorhaben:
+lokale Unternehmen mit schwacher Social-Media-Präsenz als Leads für ein
+Social-Media-Management-Angebot zu finden und priorisieren.
+
+**Wie es funktioniert:**
+1. Du pflegst eine CSV mit Kandidaten (Name, Website, Branche, Region, Kontakt —
+   siehe [`leads/prospects.example.csv`](leads/prospects.example.csv)), z.B. recherchiert
+   über Google Maps/lokale Verzeichnisse.
+2. Das Skript ruft nur die öffentliche Website jedes Kandidaten ab (kein Login, kein
+   Scraping von Instagram/Facebook selbst) und prüft, ob dort Instagram-, Facebook- oder
+   LinkedIn-Links verlinkt sind sowie ob ein Datum auf der Seite auf eine länger nicht
+   aktualisierte Präsenz hindeutet (Heuristik, keine exakte Analyse).
+3. Leads werden nach "Schwäche der Präsenz" priorisiert in eine CSV geschrieben.
+4. Für die Top-Leads generiert Claude (basierend auf
+   [`config/leadgen_offer.md`](config/leadgen_offer.md), das du vorher ausfüllst) einen
+   kurzen, personalisierten Outreach-Text.
+
+```bash
+python scripts/lead_finder.py leads/prospects.csv          # mit Outreach-Entwürfen (Top 10)
+python scripts/lead_finder.py leads/prospects.csv --no-draft   # nur analysieren, kein API-Call
+python scripts/lead_finder.py leads/prospects.csv --top 5
+```
+
+**Wichtig:** Das Skript verschickt nichts automatisch — Versand (E-Mail/LinkedIn) bleibt
+bewusst manuell bei dir. Automatisiertes Massen-Anschreiben ohne bestehende
+Geschäftsbeziehung ist in Deutschland/der EU rechtlich riskant (DSGVO,
+Wettbewerbsrecht bei B2B-Kaltakquise). CSVs mit gesammelten Kontaktdaten landen unter
+`leads/` und sind per `.gitignore` vom Commit ausgeschlossen.
+
+## Webseiten-Optimierer (Analyse + neu designte Version)
+
+`scripts/website_optimizer.py` analysiert eine beliebige Webseite und erstellt daraus
+eine professionell neu designte, mobile-optimierte Version — nützlich z.B. um Leads aus
+dem Lead-Finder eine konkrete "Vorher/Nachher"-Vorschau zu zeigen.
+
+**Wie es funktioniert:**
+1. Das Skript lädt die Webseite und misst Technik-Werte (Ladezeit, Seitengröße,
+   Mobil-Tauglichkeit, SEO-Basics, Bildgrößen, render-blockierende Skripte).
+2. Claude bewertet Design, Mobil-Darstellung, Geschwindigkeit und SEO mit Schulnoten
+   und schreibt einen verständlichen Bericht mit priorisiertem Maßnahmenplan
+   (`bericht.md`).
+3. Claude baut aus den **echten Inhalten** der Seite (Texte, Bilder, Navigation,
+   Kontaktdaten — nichts wird dazuerfunden) eine komplett neue, moderne HTML-Seite
+   (`neue-webseite.html`), die man direkt im Browser öffnen kann.
+
+```bash
+python scripts/website_optimizer.py https://beispiel-firma.de                 # Bericht + Redesign
+python scripts/website_optimizer.py https://beispiel-firma.de --nur-analyse   # nur Bericht
+```
+
+Die Ergebnisse landen in `website_optimierung/<domain>_<datum>/`. Benötigt nur den
+`ANTHROPIC_API_KEY` (in der `.env` oder als Umgebungsvariable).
+
+**Wichtig:** Eine fremde Live-Webseite kann das Skript nicht direkt verändern — dafür
+bräuchte man Zugriff auf deren Hosting. Die erzeugte HTML-Datei ist eine fertige
+Vorlage/Vorschau, die man hochladen oder dem Kunden präsentieren kann.
 
 ## Sicherheit
 
