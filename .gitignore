@@ -5,3 +5,10 @@ __pycache__/
 venv/
 .DS_Store
 .claude/
+
+# Lead-Recherche kann personenbezogene Kontaktdaten enthalten - nicht committen.
+leads/*.csv
+!leads/prospects.example.csv
+
+# Ergebnisse des Webseiten-Optimierers (Berichte + Redesigns) - nicht committen.
+website_optimierung/
