@@ -17,10 +17,12 @@ import csv
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 
 import anthropic
 import requests
@@ -29,6 +31,18 @@ OFFER_FILE = Path(__file__).resolve().parent.parent / "config" / "leadgen_offer.
 MODEL = "claude-opus-4-8"
 REQUEST_TIMEOUT = 10
 USER_AGENT = "Mozilla/5.0 (compatible; LeadResearchBot/1.0; manuelle Vertriebsrecherche)"
+
+# Rate-Limiting: Mindestabstand zwischen HTTP-Requests, damit wir fremde Server hoeflich
+# und nicht in Bursts belasten (gilt global ueber alle Prospects/Unterseiten hinweg).
+REQUEST_DELAY = 1.5
+# Unterseiten-Check: zusaetzlich zur Startseite werden bis zu MAX_SUBPAGES interne Seiten
+# geprueft, deren URL auf typische Kontakt-/Aktivitaets-Bereiche hindeutet (Social-Links und
+# Blog-Daten stehen oft nicht auf der Startseite, sondern im Footer/Impressum bzw. unter /blog).
+MAX_SUBPAGES = 5
+SUBPAGE_HINTS = (
+    "impressum", "kontakt", "contact", "blog", "news", "aktuelles",
+    "neuigkeiten", "presse", "ueber-uns", "about", "team",
+)
 
 SOCIAL_PATTERNS = {
     "instagram": re.compile(r"instagram\.com/[A-Za-z0-9_.\-/]+", re.IGNORECASE),
@@ -85,17 +99,79 @@ def load_prospects(csv_path: Path) -> List[Prospect]:
         ]
 
 
-def _fetch(url: str) -> Optional[str]:
+_last_request_time = 0.0
+
+
+def _throttle() -> None:
+    """Sorgt fuer mindestens REQUEST_DELAY Sekunden Abstand zwischen zwei HTTP-Requests."""
+    global _last_request_time
+    wait = REQUEST_DELAY - (time.monotonic() - _last_request_time)
+    if wait > 0:
+        time.sleep(wait)
+    _last_request_time = time.monotonic()
+
+
+def _normalize_url(url: str) -> Optional[str]:
     if not url:
         return None
     if not url.startswith("http"):
         url = "https://" + url
+    return url
+
+
+def _fetch(url: str) -> Optional[str]:
+    """Laedt eine bereits normalisierte URL, mit globalem Rate-Limiting."""
+    if not url:
+        return None
+    _throttle()
     try:
         response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.text
     except requests.RequestException:
         return None
+
+
+def _same_host(base_url: str, candidate_url: str) -> bool:
+    base = urlparse(base_url).netloc.lower().removeprefix("www.")
+    cand = urlparse(candidate_url).netloc.lower().removeprefix("www.")
+    return bool(cand) and cand == base
+
+
+def _internal_subpage_urls(base_url: str, html_text: str, limit: int) -> List[str]:
+    """Findet bis zu `limit` interne Links, deren URL auf Kontakt-/Aktivitaets-Seiten hindeutet."""
+    found: List[str] = []
+    seen = {base_url.rstrip("/")}
+    for href in re.findall(r"""href=["']([^"'#]+)["']""", html_text, re.IGNORECASE):
+        absolute = urljoin(base_url, href.strip())
+        if not absolute.startswith("http") or not _same_host(base_url, absolute):
+            continue
+        if not any(hint in absolute.lower() for hint in SUBPAGE_HINTS):
+            continue
+        key = absolute.rstrip("/")
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(absolute)
+        if len(found) >= limit:
+            break
+    return found
+
+
+def gather_site_text(website: str) -> Tuple[Optional[str], int]:
+    """Laedt Startseite + relevante Unterseiten und gibt (kombinierter Text, Anzahl geladener Seiten) zurueck."""
+    base = _normalize_url(website)
+    if base is None:
+        return None, 0
+    home = _fetch(base)
+    if home is None:
+        return None, 0
+    pages = [home]
+    for sub in _internal_subpage_urls(base, home, MAX_SUBPAGES):
+        text = _fetch(sub)
+        if text:
+            pages.append(text)
+    return "\n".join(pages), len(pages)
 
 
 def _months_since(year: int, month: int) -> int:
@@ -105,36 +181,46 @@ def _months_since(year: int, month: int) -> int:
 
 def analyze_website(website: str) -> Analysis:
     analysis = Analysis()
-    html_text = _fetch(website)
+    html_text, pages_checked = gather_site_text(website)
     if html_text is None:
         analysis.reasoning.append("Website nicht erreichbar oder keine URL angegeben - manuell pruefen")
         return analysis
+
+    page_note = "Startseite" if pages_checked <= 1 else f"Startseite + {pages_checked - 1} Unterseite(n)"
 
     analysis.found_platforms = [p for p, pattern in SOCIAL_PATTERNS.items() if pattern.search(html_text)]
     missing = [p for p in TARGET_PLATFORMS if p not in analysis.found_platforms]
 
     if not analysis.found_platforms:
         analysis.score += 3
-        analysis.reasoning.append("Keine Social-Media-Links auf der Website gefunden")
+        analysis.reasoning.append(f"Keine Social-Media-Links gefunden ({page_note} geprueft)")
     elif missing:
         analysis.score += len(missing)
         analysis.reasoning.append(
-            f"Verlinkt: {', '.join(analysis.found_platforms)} - fehlt: {', '.join(missing)}"
+            f"Verlinkt: {', '.join(analysis.found_platforms)} - fehlt: {', '.join(missing)} ({page_note} geprueft)"
         )
     else:
         analysis.reasoning.append("Alle Ziel-Plattformen (Instagram/Facebook/LinkedIn) verlinkt")
 
-    dates = [(int(year), MONTH_NUMBERS[month.lower()]) for month, year in DATE_PATTERN.findall(html_text)]
-    if dates:
-        year, month = max(dates)
+    raw_dates = [(int(year), MONTH_NUMBERS[month.lower()]) for month, year in DATE_PATTERN.findall(html_text)]
+    # Nur Daten in Vergangenheit/aktuellem Monat als "Aktivitaet" werten. Zukunftsdaten (Event-
+    # Ankuendigungen etc.) wuerden months_since negativ machen und die Stale-Heuristik aushebeln.
+    past_dates = [(y, m) for (y, m) in raw_dates if _months_since(y, m) >= 0]
+    if past_dates:
+        year, month = max(past_dates)
         analysis.latest_mentioned_date = f"{month:02d}/{year}"
         analysis.months_since_update = _months_since(year, month)
         if analysis.months_since_update >= STALE_MONTHS_THRESHOLD:
             analysis.score += 2
             analysis.reasoning.append(
-                f"Neuestes auf der Website gefundenes Datum: {analysis.latest_mentioned_date} "
-                f"(~{analysis.months_since_update} Monate her, Heuristik - manuell verifizieren)"
+                f"Neuestes gefundenes Datum: {analysis.latest_mentioned_date} "
+                f"(~{analysis.months_since_update} Monate her, Heuristik - manuell verifizieren; "
+                "Copyright-/Footer-Jahre koennen taeuschen)"
             )
+    elif raw_dates:
+        analysis.reasoning.append(
+            "Nur Datumsangaben in der Zukunft gefunden (vermutlich Termine/Events) - fuer Aktualitaet ignoriert"
+        )
     else:
         analysis.reasoning.append("Kein Datum/Blog-Bereich gefunden - Aktivitaet nicht automatisch einschaetzbar")
 
