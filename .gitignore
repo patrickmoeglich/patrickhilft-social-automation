@@ -9,6 +9,8 @@ venv/
 # Lead-Recherche kann personenbezogene Kontaktdaten enthalten - nicht committen.
 leads/*.csv
 !leads/prospects.example.csv
+# Telegram-Update-Offset (Laufzeitstatus des Pollers) - nicht committen.
+leads/.tg_offset
 
 # Ergebnisse des Webseiten-Optimierers (Berichte + Redesigns) - nicht committen.
 website_optimierung/

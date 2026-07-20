@@ -215,9 +215,12 @@ scripts/telegram_bot.py      Telegram Bot API: senden, Buttons, Fotos empfangen,
 scripts/ocoya_client.py      Ocoya API: Post erstellen + für Zeitpunkt einplanen
 scripts/list_ocoya_resources.py   Einmaliges lokales Setup-Hilfsskript
 scripts/main.py               Orchestriert den gesamten Ablauf
-scripts/lead_finder.py        Eigenständiges Lead-Finder-Skript (siehe Abschnitt oben)
-config/leadgen_offer.md       Angebots-Briefing für den Lead-Finder
-leads/                        Prospect-/Ergebnis-CSVs (bis auf das Beispiel gitignored)
+scripts/lead_finder.py        Lead-Recherche: Website/Impressum prüfen -> Master-Liste (siehe Abschnitt "Lead-Finder + Anrufliste")
+scripts/lead_store.py         Persistente Master-Liste leads/leads.csv (Status, kein_interesse-Sperre, Wiedervorlage)
+scripts/lead_caller.py        Wählt bis zu 5 Leads, erzeugt Gesprächsleitfaden, sendet Telegram-Karten mit Buttons
+scripts/lead_status_poller.py Holt die Button-Klicks nach und schreibt sie in den Status zurück
+prompts/voice_profile_b2b.md  Voice-Profil für den Gesprächsleitfaden (als system übergeben)
+leads/                        Prospect-CSV + Master-Liste leads.csv (bis auf das Beispiel gitignored)
 .github/workflows/weekly-post.yml  Wöchentlicher Cron-Job + manueller Trigger
 
 scripts/daily/                 Eigenständiges tägliches Programm (kein Ocoya, keine Freigabe)
@@ -303,36 +306,70 @@ die `cron`-Zeile in `.github/workflows/daily-post.yml`).
 `linkedin`, `linkedin_video`, `twitter`, `twitter_video`, `tiktok`
 (komma-getrennt, beliebige Kombination).
 
-## Lead-Finder (eigenes Social-Media-Management-Angebot akquirieren)
+## Lead-Finder + Anrufliste (eigenes Angebot akquirieren)
 
-`scripts/lead_finder.py` ist ein separates Hilfsskript für ein eigenes Vorhaben:
-lokale Unternehmen mit schwacher Social-Media-Präsenz als Leads für ein
-Social-Media-Management-Angebot zu finden und priorisieren.
+Recherche lokaler Betriebe mit schwacher Online-Präsenz und Aufbereitung als
+**Telefon-Anrufliste** — kein Mailversand. Grund: Kalte Werbe-E-Mails brauchen im B2B
+eine vorherige Einwilligung (§ 7 Abs. 2 UWG); telefonische Ansprache Gewerbetreibender
+ist bei sachlichem Bezug über die mutmaßliche Einwilligung zulässig. Ob das für dein
+konkretes Angebot trägt, bitte vorab anwaltlich klären.
 
-**Wie es funktioniert:**
-1. Du pflegst eine CSV mit Kandidaten (Name, Website, Branche, Region, Kontakt —
-   siehe [`leads/prospects.example.csv`](leads/prospects.example.csv)), z.B. recherchiert
-   über Google Maps/lokale Verzeichnisse.
-2. Das Skript ruft nur die öffentliche Website jedes Kandidaten ab (kein Login, kein
-   Scraping von Instagram/Facebook selbst) und prüft, ob dort Instagram-, Facebook- oder
-   LinkedIn-Links verlinkt sind sowie ob ein Datum auf der Seite auf eine länger nicht
-   aktualisierte Präsenz hindeutet (Heuristik, keine exakte Analyse).
-3. Leads werden nach "Schwäche der Präsenz" priorisiert in eine CSV geschrieben.
-4. Für die Top-Leads generiert Claude (basierend auf
-   [`config/leadgen_offer.md`](config/leadgen_offer.md), das du vorher ausfüllst) einen
-   kurzen, personalisierten Outreach-Text.
+**Vier Bausteine:**
+
+1. **Recherche** — `scripts/lead_finder.py` liest eine Prospect-CSV (Name, Website,
+   Branche, Region, `contact_name`, `phone`, `notes` — siehe
+   [`leads/prospects.example.csv`](leads/prospects.example.csv)), ruft je Betrieb nur die
+   öffentliche Website inkl. Impressum/Kontakt ab (kein Login, kein Social-Scraping),
+   prüft Social-Verlinkung + Aktualität (Heuristik), **liest die Telefonnummer aus dem
+   Impressum** (manuelle `phone`-Spalte hat Vorrang) und schreibt alles in die persistente
+   Master-Liste `leads/leads.csv`.
+2. **Leitfaden + Versand** — `scripts/lead_caller.py` wählt bis zu 5 anrufbare Leads
+   (höchster Score zuerst, nur mit Nummer), erzeugt je einen **Gesprächsleitfaden** (vier
+   Blöcke: Aufhänger / Was das praktisch heißt / zwei Rückfragen / wahrscheinlichster
+   Einwand) und schickt pro Betrieb eine Telegram-Karte mit Nummer, Leitfaden und vier
+   Buttons. Das Voice-Profil steht in [`prompts/voice_profile_b2b.md`](prompts/voice_profile_b2b.md)
+   und wird als `system` übergeben — änderbar ohne Codeänderung.
+3. **Status-Rückschrieb** — `scripts/lead_status_poller.py` holt die Button-Klicks
+   (Erreicht / Nicht erreicht / Kein Interesse / Später) nach und schreibt sie in den
+   Status zurück. Getrennt vom Versand, weil über den Tag verteilt geklickt wird.
+4. **Master-Liste** — `leads/leads.csv` ist die einzige Quelle der Wahrheit (Status,
+   `angerufen_am`, Notiz, Wiedervorlage). **`kein_interesse` sperrt dauerhaft** — wer einmal
+   ablehnt, erscheint nie wieder auf der Liste.
 
 ```bash
-python scripts/lead_finder.py leads/prospects.csv          # mit Outreach-Entwürfen (Top 10)
-python scripts/lead_finder.py leads/prospects.csv --no-draft   # nur analysieren, kein API-Call
-python scripts/lead_finder.py leads/prospects.csv --top 5
+python scripts/lead_finder.py leads/prospects.csv       # Recherche -> Master-Liste aktualisieren
+python scripts/lead_caller.py --dry-run                  # Leitfäden nur anzeigen (Testlauf, nichts senden)
+python scripts/lead_caller.py --limit 5                  # bis zu 5 Anruf-Karten nach Telegram
+python scripts/lead_status_poller.py                     # Klicks einmal abarbeiten
+python scripts/lead_status_poller.py --watch 300         # 5 Minuten lauschen
 ```
 
-**Wichtig:** Das Skript verschickt nichts automatisch — Versand (E-Mail/LinkedIn) bleibt
-bewusst manuell bei dir. Automatisiertes Massen-Anschreiben ohne bestehende
-Geschäftsbeziehung ist in Deutschland/der EU rechtlich riskant (DSGVO,
-Wettbewerbsrecht bei B2B-Kaltakquise). CSVs mit gesammelten Kontaktdaten landen unter
-`leads/` und sind per `.gitignore` vom Commit ausgeschlossen.
+### Zeitplan (lokal, nicht GitHub Actions)
+
+Bewusst **lokal** (z.B. Windows-Aufgabenplanung), nicht als GitHub-Actions-Cron: Die
+Master-Liste enthält personenbezogene Kontaktdaten, ist per `.gitignore` vom Commit
+ausgeschlossen und muss über Läufe hinweg erhalten bleiben. Actions-Runner sind flüchtig —
+ein verlorener Zustand würde die `kein_interesse`-Sperre aushebeln (genau das rechtliche
+Risiko). Anrufe passieren ohnehin am Rechner.
+
+Empfehlung (Anrufe 9–17 Uhr, werktags):
+- **Morgens werktags** `lead_finder.py` (falls neue Prospects) **und** `lead_caller.py`.
+- **Stündlich 9–17 Uhr werktags** `lead_status_poller.py`.
+
+Windows-Aufgabenplanung, Beispiel für den Sende-Lauf (werktags 9:00):
+
+```powershell
+$py = (Get-Command python).Source
+schtasks /Create /TN "LeadCaller" /TR "$py `"$PWD\scripts\lead_caller.py`"" /SC WEEKLY /D MON,TUE,WED,THU,FRI /ST 09:00
+schtasks /Create /TN "LeadPoller" /TR "$py `"$PWD\scripts\lead_status_poller.py`"" /SC HOURLY /MO 1 /ST 09:00 /ET 17:00 /K
+```
+
+(`.env` mit `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` muss geladen sein;
+neue Secrets braucht es nicht.) Auf macOS/Linux entsprechend `cron` mit `07:00 UTC` (Sommer)
+bzw. `08:00 UTC` (Winter), da Cron dort ggf. in UTC läuft.
+
+**Datenschutz:** `leads/leads.csv` und der Poller-Offset `leads/.tg_offset` sind per
+`.gitignore` vom Commit ausgeschlossen; nur `leads/prospects.example.csv` wird versioniert.
 
 ## Webseiten-Optimierer (Analyse + neu designte Version)
 

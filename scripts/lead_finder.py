@@ -1,20 +1,25 @@
-"""Findet und priorisiert lokale Unternehmen mit schwacher Social-Media-Praesenz als
-Leads fuer ein eigenes Social-Media-Management-Angebot, und entwirft dazu passende
-Outreach-Texte per Anthropic API.
+"""Findet und priorisiert lokale Unternehmen mit schwacher Online-Praesenz als Leads fuer
+ein eigenes Website-/Social-Media-Angebot und pflegt sie in eine persistente Master-Liste
+(leads/leads.csv) ein.
 
-Wichtig: Dieses Skript verschickt nichts automatisch. Es liest eine von dir gepflegte
-Liste oeffentlich bekannter Unternehmen (siehe leads/prospects.example.csv), prueft nur
-deren oeffentliche Website (kein Login, kein Scraping von Instagram/Facebook selbst),
-und schreibt priorisierte Leads + Entwurfstexte in eine CSV. Versand bleibt manuell und
-liegt in deiner Verantwortung (DSGVO/Wettbewerbsrecht bei B2B-Kaltakquise beachten).
+Dieses Skript recherchiert nur: Es liest eine von dir gepflegte Liste oeffentlich bekannter
+Unternehmen (siehe leads/prospects.example.csv), prueft deren oeffentliche Website (kein Login,
+kein Scraping von Instagram/Facebook selbst) inkl. Impressum/Kontakt, schaetzt eine Prioritaet
+und traegt Befund + Telefonnummer in die Master-Liste ein.
+
+Es verschickt nichts. Die Ansprache erfolgt telefonisch (siehe scripts/lead_caller.py) - kalte
+Werbe-Mails brauchen im B2B eine vorherige Einwilligung (§ 7 Abs. 2 UWG), das Telefon ist bei
+sachlichem Bezug ueber die mutmassliche Einwilligung zulaessig. Verantwortung dafuer liegt bei dir.
+
+Der Gespraechsleitfaden (generate_call_guide) wird bewusst nicht hier, sondern erst beim Anruf-
+Modul erzeugt - so kostet er nur fuer die tatsaechlich angerufenen Leads einen API-Call.
 
 Nutzung:
     python scripts/lead_finder.py leads/prospects.csv
-    python scripts/lead_finder.py leads/prospects.csv --top 5 --no-draft
+    python scripts/lead_finder.py leads/prospects.csv --store leads/leads.csv
 """
 import argparse
 import csv
-import os
 import re
 import sys
 import time
@@ -24,10 +29,13 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
-import anthropic
 import requests
 
-OFFER_FILE = Path(__file__).resolve().parent.parent / "config" / "leadgen_offer.md"
+import lead_store
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+VOICE_PROFILE_FILE = REPO_ROOT / "prompts" / "voice_profile_b2b.md"
+DEFAULT_STORE = REPO_ROOT / "leads" / "leads.csv"
 MODEL = "claude-opus-4-8"
 REQUEST_TIMEOUT = 10
 USER_AGENT = "Mozilla/5.0 (compatible; LeadResearchBot/1.0; manuelle Vertriebsrecherche)"
@@ -36,8 +44,8 @@ USER_AGENT = "Mozilla/5.0 (compatible; LeadResearchBot/1.0; manuelle Vertriebsre
 # und nicht in Bursts belasten (gilt global ueber alle Prospects/Unterseiten hinweg).
 REQUEST_DELAY = 1.5
 # Unterseiten-Check: zusaetzlich zur Startseite werden bis zu MAX_SUBPAGES interne Seiten
-# geprueft, deren URL auf typische Kontakt-/Aktivitaets-Bereiche hindeutet (Social-Links und
-# Blog-Daten stehen oft nicht auf der Startseite, sondern im Footer/Impressum bzw. unter /blog).
+# geprueft, deren URL auf typische Kontakt-/Aktivitaets-Bereiche hindeutet (Social-Links,
+# Blog-Daten und Telefonnummern stehen oft im Impressum/Kontakt, nicht auf der Startseite).
 MAX_SUBPAGES = 5
 SUBPAGE_HINTS = (
     "impressum", "kontakt", "contact", "blog", "news", "aktuelles",
@@ -60,6 +68,12 @@ MONTH_NUMBERS = {
 DATE_PATTERN = re.compile(rf"({'|'.join(MONTH_NUMBERS)})\s+(\d{{4}})", re.IGNORECASE)
 STALE_MONTHS_THRESHOLD = 6
 
+# Telefon-Extraktion (Heuristik). tel:-Links sind am zuverlaessigsten; Textmuster nur in der
+# Naehe eines Telefon-Labels, damit nicht jede lange Zahl (PLZ, Steuernummer) getroffen wird.
+TEL_LINK_PATTERN = re.compile(r"tel:(\+?[0-9()\-\s/\.]{6,})", re.IGNORECASE)
+PHONE_LABEL_PATTERN = re.compile(r"(?:tel\.?|telefon|fon|ruf(?:nummer)?)\b[^0-9+]{0,15}", re.IGNORECASE)
+PHONE_NUMBER_PATTERN = re.compile(r"(?:\+49|0)[0-9()\-\s/\.]{5,18}\d")
+
 
 @dataclass
 class Prospect:
@@ -68,7 +82,7 @@ class Prospect:
     industry: str = ""
     region: str = ""
     contact_name: str = ""
-    contact_email: str = ""
+    phone: str = ""  # manueller Override; leer -> aus der Website geschaetzt
     notes: str = ""
 
 
@@ -77,6 +91,7 @@ class Analysis:
     found_platforms: List[str] = field(default_factory=list)
     latest_mentioned_date: Optional[str] = None
     months_since_update: Optional[int] = None
+    phone: Optional[str] = None
     reasoning: List[str] = field(default_factory=list)
     score: int = 0
 
@@ -91,7 +106,7 @@ def load_prospects(csv_path: Path) -> List[Prospect]:
                 industry=row.get("industry", "").strip(),
                 region=row.get("region", "").strip(),
                 contact_name=row.get("contact_name", "").strip(),
-                contact_email=row.get("contact_email", "").strip(),
+                phone=row.get("phone", "").strip(),
                 notes=row.get("notes", "").strip(),
             )
             for row in reader
@@ -174,6 +189,35 @@ def gather_site_text(website: str) -> Tuple[Optional[str], int]:
     return "\n".join(pages), len(pages)
 
 
+def _clean_phone(raw: str) -> Optional[str]:
+    cleaned = re.sub(r"[^\d+]", " ", raw)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    digits = re.sub(r"\D", "", cleaned)
+    if not 6 <= len(digits) <= 15:
+        return None
+    return cleaned
+
+
+def extract_phone(html_text: str) -> Optional[str]:
+    """Schaetzt die Telefonnummer aus dem Seitentext (Heuristik, manuell verifizieren).
+
+    Reihenfolge: 1) tel:-Link (zuverlaessig), 2) Zahl direkt hinter einem Telefon-Label.
+    """
+    link = TEL_LINK_PATTERN.search(html_text)
+    if link:
+        phone = _clean_phone(link.group(1))
+        if phone:
+            return phone
+    for label in PHONE_LABEL_PATTERN.finditer(html_text):
+        snippet = html_text[label.end():label.end() + 30]
+        number = PHONE_NUMBER_PATTERN.search(snippet)
+        if number:
+            phone = _clean_phone(number.group(0))
+            if phone:
+                return phone
+    return None
+
+
 def _months_since(year: int, month: int) -> int:
     now = datetime.now()
     return (now.year - year) * 12 + (now.month - month)
@@ -187,6 +231,7 @@ def analyze_website(website: str) -> Analysis:
         return analysis
 
     page_note = "Startseite" if pages_checked <= 1 else f"Startseite + {pages_checked - 1} Unterseite(n)"
+    analysis.phone = extract_phone(html_text)
 
     analysis.found_platforms = [p for p, pattern in SOCIAL_PATTERNS.items() if pattern.search(html_text)]
     missing = [p for p in TARGET_PLATFORMS if p not in analysis.found_platforms]
@@ -227,78 +272,85 @@ def analyze_website(website: str) -> Analysis:
     return analysis
 
 
-def generate_outreach(prospect: Prospect, analysis: Analysis, offer_brief: str) -> str:
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    reasoning_text = "\n".join(f"- {r}" for r in analysis.reasoning)
-    prompt = (
-        "Schreibe eine kurze, persoenliche Erstkontakt-Nachricht (E-Mail, max. 120 Woerter, "
-        "Deutsch, ohne Betreffzeile) an folgendes Unternehmen, basierend auf diesem "
-        f"Angebots-Briefing:\n\n{offer_brief}\n\n"
-        f"Unternehmen: {prospect.name}\n"
-        f"Branche: {prospect.industry or 'unbekannt'}\n"
-        f"Region: {prospect.region or 'unbekannt'}\n"
-        f"Ansprechpartner: {prospect.contact_name or 'unbekannt - allgemein formulieren'}\n\n"
-        "Beobachtete Anhaltspunkte zur Social-Media-Praesenz (Heuristik, ggf. ungenau - "
-        f"vorsichtig andeuten, nicht als Fakt behaupten):\n{reasoning_text}\n\n"
-        "Ton: freundlich, konkret, ohne Floskeln, mit einer klaren, niedrigschwelligen "
-        "Handlungsaufforderung laut Briefing. Keine falschen Behauptungen ueber das "
-        "Unternehmen aufstellen."
+def load_voice_profile() -> str:
+    return VOICE_PROFILE_FILE.read_text(encoding="utf-8")
+
+
+def generate_call_guide(*, name: str, industry: str, region: str, contact_name: str,
+                        befund: str, voice_profile: str) -> str:
+    """Erzeugt den vierteiligen Gespraechsleitfaden (Aufhaenger / Folge / 2 Rueckfragen / Einwand).
+
+    Das Voice-Profil wird als `system` uebergeben (nicht in den User-Prompt gemischt), damit es
+    sich ohne Codeaenderung anpassen laesst. Der User-Prompt enthaelt nur die Lead-Daten.
+    """
+    import anthropic  # lokaler Import: die Recherche selbst braucht keinen Anthropic-Key
+
+    client = anthropic.Anthropic()
+    user_prompt = (
+        f"Firma: {name}\n"
+        f"Branche: {industry or 'unbekannt'}\n"
+        f"Ort: {region or 'unbekannt'}\n"
+        f"Ansprechpartner: {contact_name or 'unbekannt'}\n\n"
+        f"Befunde aus der automatischen Website-Pruefung (Heuristik, ggf. ungenau):\n{befund}"
     )
-    response = client.messages.create(model=MODEL, max_tokens=500, messages=[{"role": "user", "content": prompt}])
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=400,
+        system=voice_profile,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
     return next(block.text for block in response.content if block.type == "text").strip()
 
 
-def run(csv_path: Path, top_n: int, draft: bool, output_path: Path) -> None:
+def run(csv_path: Path, store_path: Path) -> None:
     prospects = load_prospects(csv_path)
     if not prospects:
         print(f"Keine Prospects in {csv_path} gefunden.")
         return
 
-    offer_brief = OFFER_FILE.read_text(encoding="utf-8") if draft else ""
+    rows = lead_store.load(store_path)
+    neu = aktualisiert = ohne_telefon = 0
 
-    results = []
     for prospect in prospects:
         print(f"Analysiere {prospect.name} ({prospect.website}) ...")
-        results.append((prospect, analyze_website(prospect.website)))
+        analysis = analyze_website(prospect.website)
+        phone = prospect.phone or (analysis.phone or "")
+        if not phone:
+            ohne_telefon += 1
+            analysis.reasoning.append("Keine Telefonnummer gefunden - fuer die Anrufliste manuell ergaenzen")
+        outcome = lead_store.upsert_research(
+            rows,
+            name=prospect.name, website=prospect.website, industry=prospect.industry,
+            region=prospect.region, contact_name=prospect.contact_name, phone=phone,
+            score=analysis.score, befund=" | ".join(analysis.reasoning),
+        )
+        neu += outcome == "neu"
+        aktualisiert += outcome == "aktualisiert"
 
-    results.sort(key=lambda pair: pair[1].score, reverse=True)
+    lead_store.save(store_path, rows)
 
-    with output_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["name", "website", "score", "reasoning", "outreach_draft"])
-        for i, (prospect, analysis) in enumerate(results):
-            outreach = ""
-            if draft and i < top_n:
-                try:
-                    outreach = generate_outreach(prospect, analysis, offer_brief)
-                except Exception as exc:
-                    outreach = f"[Fehler bei Entwurf: {exc}]"
-            writer.writerow([prospect.name, prospect.website, analysis.score, " | ".join(analysis.reasoning), outreach])
-
-    print(f"\n{len(results)} Leads analysiert. Ergebnis geschrieben nach: {output_path}")
-    print(f"Top {min(top_n, len(results))} Leads (hoechster Score = schwaechste Praesenz = hoechste Prioritaet):")
-    for prospect, analysis in results[:top_n]:
-        print(f"  - {prospect.name} (Score {analysis.score}): {'; '.join(analysis.reasoning)}")
+    print(f"\n{len(prospects)} Prospects verarbeitet ({neu} neu, {aktualisiert} aktualisiert). "
+          f"Master-Liste: {store_path}")
+    if ohne_telefon:
+        print(f"  Achtung: {ohne_telefon} ohne Telefonnummer - Anruf erst nach manueller Ergaenzung moeglich.")
+    top = lead_store.selectable(rows, lead_store.today(), limit=5)
+    print(f"Naechste bis zu 5 anrufbare Leads (hoechster Score = schwaechste Praesenz = hoechste Prioritaet):")
+    for row in top:
+        tel = row["phone"] or "KEINE NUMMER"
+        print(f"  - {row['name']} (Score {row['score']}, {tel}): {row['befund']}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "csv_path", type=Path,
-        help="CSV mit Prospects (Spalten: name,website,industry,region,contact_name,contact_email,notes)",
+        help="CSV mit Prospects (Spalten: name,website,industry,region,contact_name,phone,notes)",
     )
-    parser.add_argument("--top", type=int, default=10, help="Anzahl Leads mit Outreach-Entwurf (Default: 10)")
-    parser.add_argument(
-        "--no-draft", action="store_true",
-        help="Nur analysieren/scoren, keine Outreach-Texte generieren (kein Anthropic-API-Call noetig)",
-    )
-    parser.add_argument("--output", type=Path, default=None, help="Pfad fuer die Ergebnis-CSV")
+    parser.add_argument("--store", type=Path, default=DEFAULT_STORE,
+                        help=f"Pfad der persistenten Master-Liste (Default: {DEFAULT_STORE})")
     args = parser.parse_args()
 
-    output_path = args.output or Path("leads") / f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    run(args.csv_path, args.top, draft=not args.no_draft, output_path=output_path)
+    run(args.csv_path, args.store)
     return 0
 
 

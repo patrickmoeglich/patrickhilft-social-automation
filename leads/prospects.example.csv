@@ -1,3 +1,3 @@
-name,website,industry,region,contact_name,contact_email,notes
+name,website,industry,region,contact_name,phone,notes
 Beispiel Baeckerei Mueller,https://example-baeckerei-mueller.de,Handwerk/Lebensmittel,Osthofen,Frau Mueller,,Laden am Marktplatz
-Beispiel Physiotherapie Schmidt,https://example-physio-schmidt.de,Gesundheit,Worms,Herr Schmidt,,Empfehlung von Nachbarin
+Beispiel Physiotherapie Schmidt,https://example-physio-schmidt.de,Gesundheit,Worms,Herr Schmidt,06241 123456,Empfehlung von Nachbarin
