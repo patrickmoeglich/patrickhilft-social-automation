@@ -52,5 +52,5 @@ Betreuung.
 - Farbwelt: warme, gedeckte Töne (Braun/Beige/Grün), keine grellen Business-Blautöne
 - Komposition: unaufgeregt, alltagsnah, kein übertriebenes Lächeln oder posierte Gesten
 - Menschen im Bild: keine erkennbaren Gesichter, auch nicht im Profil – nur von hinten, stark verschwommen im Hintergrund, oder nur Hände/Körperteile im Fokus (z.B. Hände am Rollstuhlgriff, Hände beim Einkaufstüten-Tragen, zwei Personen von hinten auf einem Weg, Hände beim Sortieren von Unterlagen)
-- Vermeiden: künstliches Lächeln, sterile Innenräume, generische "Stockfoto"-Ästhetik, übertrieben perfekte Beleuchtung, gestellte Business-Fotografie
+- Vermeiden: künstliches Lächeln, sterile Innenräume, generische "Stockfoto"-Ästhetik, übertrieben perfekte Beleuchtung, gestellte Business-Fotografie, erkennbare Fahrzeug-Logos/Markenembleme (egal welcher Hersteller)
 - Hublift/Rampe/technische Mechanik: NIEMALS per KI generieren, auch nicht angedeutet oder im Hintergrund. Nur echte Fotos verwenden, sobald welche vorliegen. Grund: KI-Bildmodelle stellen Rampenübergänge und Anschlusshöhen regelmäßig physikalisch falsch dar (z.B. sichtbare Stufe zwischen Rampenende und Fahrzeugboden), was bei einer Zielgruppe mit Mobilitätseinschränkung sofort aus dem Bild springt und unseriös wirkt.
