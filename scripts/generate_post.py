@@ -76,6 +76,21 @@ def _build_prompt(topic_hint: str, feedback: Optional[str]) -> str:
     return prompt
 
 
+# Hublift, Rampe und Einstiegsmechanik werden von Bildmodellen regelmaessig physikalisch
+# falsch dargestellt (z.B. Stufe zwischen Rampenende und Fahrzeugboden). Das faellt genau der
+# Zielgruppe sofort auf, daher werden solche Motive in den Bildideen komplett ausgeschlossen.
+NO_MECHANICS_RULE = (
+    "Harte Einschraenkung fuer alle 3 Bildideen: Hublift, Rampe und vergleichbare "
+    "Einstiegsmechanik duerfen NICHT vorkommen - weder im Fokus noch angedeutet oder "
+    "unscharf im Hintergrund. Das gilt auch dann, wenn das Thema des Posts diese Technik "
+    "ausdruecklich nennt. Weiche in dem Fall auf Atmosphaere, Haende, Umgebung oder die "
+    "Situation drumherum aus, z.B. Blick aus dem Seitenfenster waehrend der Fahrt, Haende "
+    "auf der Armlehne, ein ruhiger Weg zur Haustuer, wartendes Fahrzeug von vorne mit "
+    "geschlossenen Tueren. Beschreibe diese Bildelemente in den englischen Prompts gar nicht "
+    "erst - verlasse dich NICHT auf Negativ-Formulierungen wie 'no ramp' oder 'without lift', "
+    "denn Bildmodelle erzeugen genannte Objekte trotz Verneinung haeufig trotzdem."
+)
+
 # Anthropics json_schema-Output unterstuetzt fuer Arrays nur minItems/maxItems von 0 oder 1,
 # daher werden die 3 Bildideen als einzelne Felder statt als Array fester Laenge modelliert.
 IMAGE_PROMPTS_SCHEMA = {
@@ -139,7 +154,8 @@ def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = N
         "auf Englisch) fuer folgenden Social-Media-Post:\n\n"
         f"Thema: {topic}\nCaption: {caption}\n\n"
         "Die 3 Vorschlaege sollen sich in Motiv, Perspektive oder Stil unterscheiden, aber alle "
-        "zum Markenbriefing passen."
+        "zum Markenbriefing passen.\n\n"
+        + NO_MECHANICS_RULE
     )
     if feedback:
         prompt += f"\n\nFeedback zu den vorherigen Vorschlaegen: \"{feedback}\""
