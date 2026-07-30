@@ -91,6 +91,16 @@ NO_MECHANICS_RULE = (
     "denn Bildmodelle erzeugen genannte Objekte trotz Verneinung haeufig trotzdem."
 )
 
+# Bildmodelle setzen an einen frontal fotografierten Kuehlergrill fast immer ein Marken-
+# emblem - im Test ein VW-Logo, obwohl das echte Fahrzeug eine Mercedes V-Klasse ist. Ein
+# fremdes Logo im eigenen Marketing ist irrefuehrend, daher wird die Frontalansicht gesperrt.
+# Englisch formuliert, weil der Satz direkt in die englischen Bildprompts uebernommen wird.
+NO_VEHICLE_BADGE_RULE = (
+    "When a vehicle appears in the image, show it partially or from an angle that excludes "
+    "the front grille/badge area entirely - e.g. side view, three-quarter rear view, or "
+    "close crop. Never show a full frontal view of the vehicle's front grille."
+)
+
 # Anthropics json_schema-Output unterstuetzt fuer Arrays nur minItems/maxItems von 0 oder 1,
 # daher werden die 3 Bildideen als einzelne Felder statt als Array fester Laenge modelliert.
 IMAGE_PROMPTS_SCHEMA = {
@@ -156,6 +166,8 @@ def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = N
         "Die 3 Vorschlaege sollen sich in Motiv, Perspektive oder Stil unterscheiden, aber alle "
         "zum Markenbriefing passen.\n\n"
         + NO_MECHANICS_RULE
+        + "\n\n"
+        + NO_VEHICLE_BADGE_RULE
     )
     if feedback:
         prompt += f"\n\nFeedback zu den vorherigen Vorschlaegen: \"{feedback}\""
