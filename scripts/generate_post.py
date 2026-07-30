@@ -76,29 +76,21 @@ def _build_prompt(topic_hint: str, feedback: Optional[str]) -> str:
     return prompt
 
 
-# Hublift, Rampe und Einstiegsmechanik werden von Bildmodellen regelmaessig physikalisch
-# falsch dargestellt (z.B. Stufe zwischen Rampenende und Fahrzeugboden). Das faellt genau der
-# Zielgruppe sofort auf, daher werden solche Motive in den Bildideen komplett ausgeschlossen.
-NO_MECHANICS_RULE = (
-    "Harte Einschraenkung fuer alle 3 Bildideen: Hublift, Rampe und vergleichbare "
-    "Einstiegsmechanik duerfen NICHT vorkommen - weder im Fokus noch angedeutet oder "
-    "unscharf im Hintergrund. Das gilt auch dann, wenn das Thema des Posts diese Technik "
-    "ausdruecklich nennt. Weiche in dem Fall auf Atmosphaere, Haende, Umgebung oder die "
-    "Situation drumherum aus, z.B. Blick aus dem Seitenfenster waehrend der Fahrt, Haende "
-    "auf der Armlehne, ein ruhiger Weg zur Haustuer, wartendes Fahrzeug von vorne mit "
-    "geschlossenen Tueren. Beschreibe diese Bildelemente in den englischen Prompts gar nicht "
-    "erst - verlasse dich NICHT auf Negativ-Formulierungen wie 'no ramp' oder 'without lift', "
-    "denn Bildmodelle erzeugen genannte Objekte trotz Verneinung haeufig trotzdem."
-)
-
-# Bildmodelle setzen an einen frontal fotografierten Kuehlergrill fast immer ein Marken-
-# emblem - im Test ein VW-Logo, obwohl das echte Fahrzeug eine Mercedes V-Klasse ist. Ein
-# fremdes Logo im eigenen Marketing ist irrefuehrend, daher wird die Frontalansicht gesperrt.
-# Englisch formuliert, weil der Satz direkt in die englischen Bildprompts uebernommen wird.
-NO_VEHICLE_BADGE_RULE = (
-    "When a vehicle appears in the image, show it partially or from an angle that excludes "
-    "the front grille/badge area entirely - e.g. side view, three-quarter rear view, or "
-    "close crop. Never show a full frontal view of the vehicle's front grille."
+# Bildmodelle treffen weder die Formensprache noch die Premium-Anmutung einer echten
+# V-Klasse; das Ergebnis wirkt generisch statt hochwertig. Dazu kamen im Test Fremdlogos am
+# Kuehlergrill und physikalisch falsche Rampengeometrien. Das Fahrzeug bleibt daher aus
+# KI-Bildern komplett draussen - echte Fotos folgen, sobald welche vorliegen.
+NO_VEHICLE_RULE = (
+    "Harte Einschraenkung fuer alle 3 Bildideen: Das Fahrzeug darf NICHT vorkommen - weder "
+    "Aussenansicht noch Innenraum, Cockpit oder Lenkrad, weder angeschnitten noch unscharf "
+    "im Hintergrund. Das schliesst Anbauteile wie Hublift und Rampe mit ein. Es gilt auch "
+    "dann, wenn das Thema des Posts das Fahrzeug ausdruecklich nennt. Weiche in dem Fall auf "
+    "Umgebung, Personen oder Details ohne Fahrzeugbezug aus, z.B. ein ruhiger Weg zur "
+    "Haustuer, Haende beim Tragen einer Einkaufstasche, ein Flur vor der Praxistuer, eine "
+    "Strasse im Herbstlicht. Beschreibe Fahrzeug und Anbauteile in den englischen Prompts "
+    "gar nicht erst - verlasse dich NICHT auf Negativ-Formulierungen wie 'no car' oder "
+    "'without vehicle', denn Bildmodelle erzeugen genannte Objekte trotz Verneinung haeufig "
+    "trotzdem."
 )
 
 # Anthropics json_schema-Output unterstuetzt fuer Arrays nur minItems/maxItems von 0 oder 1,
@@ -165,9 +157,7 @@ def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = N
         f"Thema: {topic}\nCaption: {caption}\n\n"
         "Die 3 Vorschlaege sollen sich in Motiv, Perspektive oder Stil unterscheiden, aber alle "
         "zum Markenbriefing passen.\n\n"
-        + NO_MECHANICS_RULE
-        + "\n\n"
-        + NO_VEHICLE_BADGE_RULE
+        + NO_VEHICLE_RULE
     )
     if feedback:
         prompt += f"\n\nFeedback zu den vorherigen Vorschlaegen: \"{feedback}\""
