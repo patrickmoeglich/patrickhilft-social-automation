@@ -14,3 +14,6 @@ leads/.tg_offset
 
 # Ergebnisse des Webseiten-Optimierers (Berichte + Redesigns) - nicht committen.
 website_optimierung/
+
+# Testbilder aus scripts/test_image_style.py - nicht committen.
+test_output/
