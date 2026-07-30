@@ -158,6 +158,11 @@ def generate_image_prompts(topic: str, caption: str, feedback: Optional[str] = N
         "Die 3 Vorschlaege sollen sich in Motiv, Perspektive oder Stil unterscheiden, aber alle "
         "zum Markenbriefing passen.\n\n"
         + NO_VEHICLE_RULE
+        + (
+            "\n\nFormuliere die 3 Bildprompts durchgehend auf Englisch. Uebernimm dabei keine "
+            "einzelnen deutschen Woerter aus dem Markenbriefing, sondern uebersetze sie - "
+            "also z.B. 'muted' statt 'gedeckte' und 'everyday' statt 'alltagsnah'."
+        )
     )
     if feedback:
         prompt += f"\n\nFeedback zu den vorherigen Vorschlaegen: \"{feedback}\""
