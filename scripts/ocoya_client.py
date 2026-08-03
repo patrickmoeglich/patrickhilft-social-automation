@@ -1,11 +1,14 @@
 """Minimal Ocoya API client (create post as draft, then schedule it for later)."""
 import os
+import time
 from typing import List, Optional
 
 import requests
 
 BASE_URL = "https://app.ocoya.com/api/_public/v1"
 ERROR_BODY_LIMIT = 500
+MAX_RETRIES = 3
+RETRY_BACKOFF_SECONDS = 5
 
 
 class OcoyaClient:
@@ -33,41 +36,55 @@ class OcoyaClient:
             )
         return response.json()
 
+    def _request(self, method: str, path: str, params: dict = None, **kwargs) -> dict:
+        """Fuehrt einen Ocoya-Request aus und wiederholt ihn bei 5xx oder Netzfehlern.
+
+        Ocoya liefert bei internen Fehlern eine HTML-Seite mit Status 500 statt einer
+        JSON-Antwort. Das ist meist voruebergehend - kurz warten und erneut versuchen,
+        statt den ganzen Lauf abzubrechen.
+        """
+        url = f"{BASE_URL}{path}"
+        last_error = None
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = requests.request(
+                    method, url, headers=self._headers(), params=params, timeout=30, **kwargs
+                )
+                if response.status_code >= 500 and attempt < MAX_RETRIES:
+                    last_error = (
+                        f"Ocoya-API-Fehler ({response.status_code}) fuer {response.url}: "
+                        f"{response.text[:ERROR_BODY_LIMIT]}"
+                    )
+                    print(f"Ocoya Versuch {attempt}/{MAX_RETRIES} fehlgeschlagen: {last_error}")
+                    time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+                    continue
+                return self._check(response)
+            except requests.RequestException as exc:
+                if attempt == MAX_RETRIES:
+                    raise
+                print(f"Ocoya Versuch {attempt}/{MAX_RETRIES} fehlgeschlagen: {exc}")
+                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+        raise RuntimeError(last_error or "Ocoya-Request fehlgeschlagen")
+
     def list_workspaces(self) -> list:
-        response = requests.get(f"{BASE_URL}/workspaces", headers=self._headers(), timeout=30)
-        return self._check(response)
+        return self._request("GET", "/workspaces")
 
     def list_social_profiles(self) -> list:
-        response = requests.get(
-            f"{BASE_URL}/social-profiles",
-            headers=self._headers(),
-            params={"workspaceId": self.workspace_id},
-            timeout=30,
-        )
-        return self._check(response)
+        return self._request("GET", "/social-profiles", params={"workspaceId": self.workspace_id})
 
     def create_draft_post(self, caption: str, social_profile_ids: List[str], media_urls: Optional[List[str]] = None) -> dict:
         body = {"caption": caption, "socialProfileIds": social_profile_ids}
         if media_urls:
             body["mediaUrls"] = media_urls
-        response = requests.post(
-            f"{BASE_URL}/post",
-            headers=self._headers(),
-            params={"workspaceId": self.workspace_id},
-            json=body,
-            timeout=30,
-        )
-        return self._check(response)
+        return self._request("POST", "/post", params={"workspaceId": self.workspace_id}, json=body)
 
     def schedule_post(self, post_id: str, scheduled_at_iso: str) -> dict:
-        response = requests.patch(
-            f"{BASE_URL}/post/{post_id}",
-            headers=self._headers(),
+        return self._request(
+            "PATCH",
+            f"/post/{post_id}",
             params={"workspaceId": self.workspace_id},
             json={"scheduledAt": scheduled_at_iso},
-            timeout=30,
         )
-        return self._check(response)
 
     def create_and_schedule(
         self,
