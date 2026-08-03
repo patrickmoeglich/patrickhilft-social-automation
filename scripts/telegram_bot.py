@@ -1,4 +1,5 @@
 """Minimal Telegram Bot API client (long polling, no webhook needed)."""
+import json
 import os
 import time
 from typing import List, Optional, Tuple
@@ -47,22 +48,55 @@ class TelegramBot:
             reply_markup=reply_markup,
         )
 
+    def _call_multipart(self, method: str, data: dict, files: dict) -> dict:
+        url = API_BASE.format(token=self.token, method=method)
+        response = requests.post(url, data=data, files=files, timeout=120)
+        try:
+            payload = response.json()
+        except ValueError:
+            response.raise_for_status()
+            raise
+        if not payload.get("ok"):
+            raise RuntimeError(f"Telegram API error on {method}: {payload}")
+        return payload["result"]
+
+    @staticmethod
+    def _fetch_bytes(url: str) -> bytes:
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        return response.content
+
     def send_media_group(self, photo_urls: List[str], caption: str = "", max_retries: int = 3) -> List[int]:
-        media = []
-        for i, url in enumerate(photo_urls):
-            item = {"type": "photo", "media": url}
-            if i == 0 and caption:
-                item["caption"] = caption
-            media.append(item)
+        """Schickt mehrere Fotos als Album zur Auswahl.
+
+        Die Bilder werden vom Runner selbst heruntergeladen und als Datei-Upload an
+        Telegram geschickt, statt Telegram die Host-URL abrufen zu lassen. Damit haengt
+        die Vorschau nicht mehr an der Erreichbarkeit von ImgBB/Catbox aus Telegrams
+        Sicht (Fehler WEBPAGE_MEDIA_EMPTY / WEBPAGE_CURL_FAILED).
+        """
         for attempt in range(1, max_retries + 1):
             try:
-                result = self._call("sendMediaGroup", chat_id=self.chat_id, media=media)
+                media = []
+                files = {}
+                for index, url in enumerate(photo_urls):
+                    field = f"photo{index}"
+                    item = {"type": "photo", "media": f"attach://{field}"}
+                    if index == 0 and caption:
+                        item["caption"] = caption
+                    media.append(item)
+                    files[field] = (f"{field}.png", self._fetch_bytes(url), "image/png")
+                result = self._call_multipart(
+                    "sendMediaGroup",
+                    data={"chat_id": self.chat_id, "media": json.dumps(media)},
+                    files=files,
+                )
                 return [message["message_id"] for message in result]
-            except RuntimeError as exc:
-                # Telegram occasionally fails to fetch a freshly uploaded image URL
-                # (e.g. CDN propagation delay) - worth a short retry before giving up.
-                if "WEBPAGE_CURL_FAILED" not in str(exc) or attempt == max_retries:
+            except (RuntimeError, requests.RequestException) as exc:
+                # Netz-/CDN-Aussetzer beim Herunterladen oder beim Upload sind meist
+                # voruebergehend - kurz warten und erneut versuchen.
+                if attempt == max_retries:
                     raise
+                print(f"sendMediaGroup Versuch {attempt}/{max_retries} fehlgeschlagen: {exc}")
                 time.sleep(3 * attempt)
 
     def answer_callback_query(self, callback_query_id: str, text: Optional[str] = None) -> None:
