@@ -11,7 +11,7 @@ import anthropic
 MODEL = "claude-opus-4-8"
 BRAND_FILE = Path(__file__).resolve().parent.parent / "config" / "brand.md"
 
-# Feste Themenliste aus den drei Leistungsbereichen von patrickhilft.de.
+# Feste Themenliste rund um die Leistungen und den Alltag von patrickhilft.de.
 # Es wird pro Woche automatisch EIN Thema ausgewaehlt (siehe _pick_weekly_topic),
 # damit sich die Posts abwechseln und nicht immer dasselbe Thema kommt.
 WEEKLY_TOPICS = [
@@ -20,18 +20,51 @@ WEEKLY_TOPICS = [
     "Alltagsbegleitung: Gesellschaft leisten und Zeit gegen Einsamkeit schenken",
     "Gemeinsame Spaziergaenge an der frischen Luft",
     "Gassi-Service und Hilfe mit Haustieren (Hunde, Katzen, Kleintiere)",
-    "Begleitung zu Aemtern und Behoerden - Termine gemeinsam meistern",
+    "Begleitung zu Terminen - Arzt, Amt, Bank oder Beratungsstelle gemeinsam meistern",
     "Sichere Fahrten mit dem behindertengerechten V-Class inkl. Rollstuhl-Hublift",
     "Entlastung fuer pflegende Angehoerige - eine verlaessliche Auszeit",
-    "Begleitung zu Arztterminen und Untersuchungen",
     "Persoenliche Betreuung: da sein, zuhoeren, den Tag strukturieren",
     "Unterstuetzung fuer Familien im turbulenten Alltag",
     "Flexible Alltagshilfe - individuell nach Bedarf statt Standardpaket",
+    "Der Entlastungsbetrag der Pflegekasse - ein monatliches Budget, das viele verfallen lassen",
+    "Wie ein Erstgespraech ablaeuft - was beim ersten Kontakt passiert",
+    "Was Alltagshilfe NICHT ist - die Abgrenzung zur Pflege verstaendlich erklaert",
+    "Typische Missverstaendnisse ueber Haushaltshilfe und Alltagsunterstuetzung",
+    "Wann ist der richtige Zeitpunkt, sich Hilfe zu holen?",
+    "Wenn die Kinder weit weg wohnen - Angehoerige aus der Ferne entlasten",
+    "Sicherheit in der Wohnung: Stolperfallen erkennen und Stuerze vermeiden",
+    "Warum immer dieselbe Person kommt - Vertrauen statt wechselndes Personal",
+    "Osthofen und Umgebung - kurze Wege und echte Nachbarschaft",
+    "Warum ich das mache - persoenliche Motivation hinter Patrick hilft",
+    "Kleine Gesten mit grosser Wirkung im Alltag",
+]
+
+# Saisonale Themen laufen NICHT in der normalen Rotation mit, sondern sind an feste
+# Kalenderwochen gebunden - sonst kaeme "Sommerhitze" irgendwann im Oktober.
+SEASONAL_TOPICS = {
+    28: "Sommerhitze - worauf aeltere Menschen jetzt besonders achten sollten",
+    51: "Feiertage und Einsamkeit - warum gerade dann Begleitung zaehlt",
+    3: "Winter und Glaette - sicher durch die kalte Jahreszeit kommen",
+}
+
+# Zusaetzlich zum Thema rotiert die Darstellungsform. Damit fuehlt sich dasselbe Thema
+# beim naechsten Durchlauf anders an, statt wieder eine Leistungsaufzaehlung zu werden.
+POST_FORMATS = [
+    "Leistungsvorstellung: das Angebot klar und konkret beschreiben, mit Nutzen fuer den Leser.",
+    "Alltagsszene: eine kurze, warme Momentaufnahme erzaehlen (anonymisiert, keine echten Namen).",
+    "Frage an die Community: mit einer echten, offenen Frage einsteigen und zum Antworten einladen.",
+    "Mythos vs. Fakt: eine verbreitete Fehlannahme benennen und richtigstellen.",
+    "Tipp der Woche: zwei bis vier praktische, sofort umsetzbare Hinweise geben.",
+    "Blick hinter die Kulissen: persoenlich und nahbar aus dem Arbeitsalltag erzaehlen.",
 ]
 
 # Zaehlt hoch, wenn im selben Lauf per "Neu generieren" ein anderer Entwurf angefordert wird,
-# damit dann auch ein anderes Thema gewaehlt wird (nicht nur eine andere Formulierung).
+# damit dann auch ein anderes Thema und Format gewaehlt wird (nicht nur eine Umformulierung).
 _topic_offset = 0
+
+
+def _current_week() -> int:
+    return datetime.now(ZoneInfo("Europe/Berlin")).isocalendar().week
 
 
 def _pick_weekly_topic(regenerating: bool) -> str:
@@ -39,8 +72,19 @@ def _pick_weekly_topic(regenerating: bool) -> str:
     global _topic_offset
     if regenerating:
         _topic_offset += 1
-    week = datetime.now(ZoneInfo("Europe/Berlin")).isocalendar().week
+    week = _current_week()
+    if _topic_offset == 0 and week in SEASONAL_TOPICS:
+        return SEASONAL_TOPICS[week]
     return WEEKLY_TOPICS[(week + _topic_offset) % len(WEEKLY_TOPICS)]
+
+
+def _pick_format() -> str:
+    """Waehlt die Darstellungsform fuer diesen Post.
+
+    Der Faktor 5 sorgt dafuer, dass Format und Thema in unterschiedlichem Takt rotieren -
+    dasselbe Thema kommt beim naechsten Durchlauf also in einer anderen Form.
+    """
+    return POST_FORMATS[(_current_week() * 5 + _topic_offset) % len(POST_FORMATS)]
 
 
 OUTPUT_SCHEMA = {
@@ -59,13 +103,15 @@ OUTPUT_SCHEMA = {
 }
 
 
-def _build_prompt(topic_hint: str, feedback: Optional[str]) -> str:
+def _build_prompt(topic_hint: str, format_hint: str, feedback: Optional[str]) -> str:
     prompt = (
-        "Erstelle einen neuen Social-Media-Post-Entwurf für diese Woche.\n\n"
-        f"Das Thema für diesen Post ist fest vorgegeben:\n{topic_hint}\n\n"
-        "Schreibe konkret und lebendig zu genau diesem Thema. Bleib beim vorgegebenen Thema "
-        "und weiche nicht automatisch auf Arzttermine oder Fahrdienste aus, wenn das Thema "
-        "etwas anderes vorgibt. Halte dich strikt an Tonalität und Format-Vorgaben aus dem Briefing."
+        "Erstelle einen neuen Social-Media-Post-Entwurf f\u00fcr diese Woche.\n\n"
+        f"Das Thema f\u00fcr diesen Post ist fest vorgegeben:\n{topic_hint}\n\n"
+        f"Die Darstellungsform f\u00fcr diesen Post ist ebenfalls vorgegeben:\n{format_hint}\n\n"
+        "Schreibe konkret und lebendig zu genau diesem Thema und halte dich an die "
+        "vorgegebene Darstellungsform. Bleib beim vorgegebenen Thema und weiche nicht "
+        "automatisch auf Arzttermine oder Fahrdienste aus, wenn das Thema etwas anderes "
+        "vorgibt. Halte dich strikt an Tonalit\u00e4t und Format-Vorgaben aus dem Briefing."
     )
     if feedback:
         prompt += (
@@ -133,6 +179,7 @@ def generate_post(feedback: Optional[str] = None) -> dict:
     """Returns {"topic": str, "caption": str, "hashtags": list[str]}."""
     brand_brief = BRAND_FILE.read_text(encoding="utf-8")
     topic_hint = _pick_weekly_topic(regenerating=feedback is not None)
+    format_hint = _pick_format()
 
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     response = client.messages.create(
@@ -140,7 +187,7 @@ def generate_post(feedback: Optional[str] = None) -> dict:
         max_tokens=1024,
         system=_system_prompt(brand_brief),
         output_config={"format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
-        messages=[{"role": "user", "content": _build_prompt(topic_hint, feedback)}],
+        messages=[{"role": "user", "content": _build_prompt(topic_hint, format_hint, feedback)}],
     )
 
     text = next(block.text for block in response.content if block.type == "text")
