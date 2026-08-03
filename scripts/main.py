@@ -171,7 +171,13 @@ def _select_image(bot: TelegramBot, draft: dict) -> Optional[str]:
             image_prompts = generate_image_prompts(draft["topic"], draft["caption"], feedback=REGENERATE_IMAGE_FEEDBACK)
             image_urls = generate_image_suggestions(image_prompts)
             bot.send_media_group(image_urls, caption="Neue Bildvorschläge für den Post")
-            bot.edit_message(choice_message_id, _format_image_choice_message(), reply_markup=image_choice_keyboard())
+            # Die Auswahl-Nachricht wird NEU gesendet statt bearbeitet: eine bearbeitete
+            # Nachricht bleibt an ihrer alten Position im Chat und steht dann oberhalb der
+            # neuen Bilder - die Buttons waeren dadurch praktisch unauffindbar.
+            bot.edit_message(choice_message_id, "🔄 <b>Neue Vorschläge weiter unten im Chat.</b>")
+            choice_message_id = bot.send_message(
+                _format_image_choice_message(), reply_markup=image_choice_keyboard()
+            )
             continue
 
         if kind == "callback" and value.startswith("img_"):
@@ -180,7 +186,8 @@ def _select_image(bot: TelegramBot, draft: dict) -> Optional[str]:
             return image_urls[index]
 
         if kind == "callback" and value == "own_image":
-            bot.edit_message(choice_message_id, "📤 Bitte jetzt ein Bild an diesen Chat senden.")
+            bot.edit_message(choice_message_id, "📤 Eigenes Bild angefordert.")
+            bot.send_message("📤 <b>Bitte jetzt ein Bild an diesen Chat senden.</b>")
             upload_result = bot.wait_for_callback_or_photo(choice_message_id, timeout_seconds=POLL_TIMEOUT_MINUTES * 60)
 
             if upload_result is None:
