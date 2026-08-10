@@ -14,6 +14,10 @@ class TelegramBot:
     def __init__(self, token: Optional[str] = None, chat_id: Optional[str] = None):
         self.token = token or os.environ["TELEGRAM_BOT_TOKEN"]
         self.chat_id = chat_id or os.environ["TELEGRAM_CHAT_ID"]
+        # Persists across all _wait() calls for the lifetime of this bot instance, so
+        # that an update we've already consumed (e.g. the "regenerate" click that just
+        # resolved a decision) is never re-fetched and re-processed on the next call.
+        self._update_offset = 0
 
     def _call(self, method: str, **params) -> dict:
         url = API_BASE.format(token=self.token, method=method)
@@ -146,13 +150,12 @@ class TelegramBot:
 
     def _wait(self, message_id: int, timeout_seconds: int, want_photo: bool) -> Optional[Tuple[str, str]]:
         deadline = time.monotonic() + timeout_seconds
-        offset = 0
         while time.monotonic() < deadline:
             remaining = deadline - time.monotonic()
             poll_timeout = int(min(25, max(1, remaining)))
-            updates = self.get_updates(offset=offset, timeout=poll_timeout)
+            updates = self.get_updates(offset=self._update_offset, timeout=poll_timeout)
             for update in updates:
-                offset = update["update_id"] + 1
+                self._update_offset = update["update_id"] + 1
                 callback = update.get("callback_query")
                 if callback:
                     if callback.get("message", {}).get("message_id") != message_id:
