@@ -34,6 +34,16 @@ Betreuung.
   werden – niemals als separates, buchbares oder abrechenbares Angebot
   formuliert werden (z.B. keine Formulierungen wie "Fahrdienst buchen" oder
   "Ich bringe Sie für X Euro zum Termin").
+- **Entlastungsbetrag der Pflegekasse als abrechenbare/buchbare Leistung**:
+  aktuell noch NICHT erlaubt, da die Anerkennung als Alltagsunterstützungs-
+  angebot durch die ADD (Aufsichts- und Dienstleistungsdirektion) noch
+  aussteht. Der Entlastungsbetrag darf höchstens rein informativ erklärt
+  werden (was er ist, wofür er gedacht ist) – niemals mit einem Angebot oder
+  Call-to-Action verknüpft werden wie "nutzen Sie Ihren Entlastungsbetrag bei
+  uns" oder "wir rechnen über den Entlastungsbetrag ab". Dieses Verbot fällt
+  automatisch weg, sobald die Anerkennung vorliegt und auf patrickhilft.de
+  vermerkt ist (das Skript prüft das selbstständig, siehe
+  scripts/generate_post.py).
 
 ## Format-Vorgaben
 - Sprache: Deutsch
