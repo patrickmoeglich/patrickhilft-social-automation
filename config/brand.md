@@ -37,12 +37,12 @@ Betreuung.
 - **Entlastungsbetrag der Pflegekasse als abrechenbare/buchbare Leistung**:
   aktuell noch NICHT erlaubt, da die Anerkennung als Alltagsunterstützungs-
   angebot durch die ADD (Aufsichts- und Dienstleistungsdirektion) noch
-  aussteht. Der Entlastungsbetrag darf höchstens rein informativ erklärt
-  werden (was er ist, wofür er gedacht ist) – niemals mit einem Angebot oder
-  Call-to-Action verknüpft werden wie "nutzen Sie Ihren Entlastungsbetrag bei
-  uns" oder "wir rechnen über den Entlastungsbetrag ab". Dieses Verbot fällt
-  automatisch weg, sobald die Anerkennung vorliegt und auf patrickhilft.de
-  vermerkt ist (das Skript prüft das selbstständig, siehe
+  aussteht. Der Entlastungsbetrag darf hoechstens rein informativ erklaert
+  werden (was er ist, wofuer er gedacht ist) - niemals mit einem Angebot oder
+  Call-to-Action verknuepft werden wie "nutzen Sie Ihren Entlastungsbetrag
+  bei uns" oder "wir rechnen ueber den Entlastungsbetrag ab". Dieses Verbot
+  faellt automatisch weg, sobald die Anerkennung vorliegt und auf
+  patrickhilft.de vermerkt ist (das Skript prueft das selbststaendig, siehe
   scripts/generate_post.py).
 
 ## Format-Vorgaben
