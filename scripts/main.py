@@ -116,9 +116,12 @@ def _approve_text(bot: TelegramBot) -> Optional[dict]:
             if regenerations > MAX_REGENERATIONS:
                 bot.edit_message(
                     message_id,
-                    _format_message(draft) + "\n\n⚠️ <b>Limit fuer Neu-Generierungen erreicht.</b>",
+                    _format_message(draft)
+                    + "\n\n⚠️ <b>Limit fuer Neu-Generierungen erreicht - du kannst den aktuellen "
+                    "Text noch freigeben oder abbrechen.</b>",
+                    reply_markup=approval_keyboard(allow_regenerate=False),
                 )
-                return None
+                continue
             bot.edit_message(message_id, _format_message(draft) + "\n\n⏳ Neuer Entwurf wird erstellt ...")
             draft = generate_post(feedback=REGENERATE_FEEDBACK)
             bot.edit_message(message_id, _format_message(draft), reply_markup=approval_keyboard())
@@ -164,9 +167,12 @@ def _select_image(bot: TelegramBot, draft: dict) -> Optional[str]:
             if image_regenerations > MAX_IMAGE_REGENERATIONS:
                 bot.edit_message(
                     choice_message_id,
-                    _format_image_choice_message() + "\n\n⚠️ <b>Limit fuer neue Bildvorschlaege erreicht.</b>",
+                    _format_image_choice_message()
+                    + "\n\n⚠️ <b>Limit fuer neue Bildvorschlaege erreicht - bitte eins der aktuellen "
+                    "Bilder waehlen, ein eigenes hochladen oder abbrechen.</b>",
+                    reply_markup=image_choice_keyboard(allow_regenerate=False),
                 )
-                return None
+                continue
             bot.edit_message(choice_message_id, "⏳ Neue Bildvorschläge werden erstellt ...")
             image_prompts = generate_image_prompts(draft["topic"], draft["caption"], feedback=REGENERATE_IMAGE_FEEDBACK)
             image_urls = generate_image_suggestions(image_prompts)
