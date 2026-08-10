@@ -7,6 +7,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 import anthropic
+import requests
 
 MODEL = "claude-opus-4-8"
 BRAND_FILE = Path(__file__).resolve().parent.parent / "config" / "brand.md"
@@ -26,7 +27,6 @@ WEEKLY_TOPICS = [
     "Persoenliche Betreuung: da sein, zuhoeren, den Tag strukturieren",
     "Unterstuetzung fuer Familien im turbulenten Alltag",
     "Flexible Alltagshilfe - individuell nach Bedarf statt Standardpaket",
-    "Der Entlastungsbetrag der Pflegekasse - ein monatliches Budget, das viele verfallen lassen",
     "Wie ein Erstgespraech ablaeuft - was beim ersten Kontakt passiert",
     "Was Alltagshilfe NICHT ist - die Abgrenzung zur Pflege verstaendlich erklaert",
     "Typische Missverstaendnisse ueber Haushaltshilfe und Alltagsunterstuetzung",
@@ -46,6 +46,52 @@ SEASONAL_TOPICS = {
     51: "Feiertage und Einsamkeit - warum gerade dann Begleitung zaehlt",
     3: "Winter und Glaette - sicher durch die kalte Jahreszeit kommen",
 }
+
+# Der Entlastungsbetrag (SGB XI) darf erst beworben werden, wenn die Anerkennung als
+# Alltagsunterstuetzungsangebot durch die ADD (Aufsichts- und Dienstleistungsdirektion)
+# vorliegt - sonst wuerde eine Leistung angeboten, die aktuell noch nicht abrechenbar ist.
+# Das Thema ist deshalb NICHT fest in WEEKLY_TOPICS, sondern wird nur mit in die Rotation
+# aufgenommen, wenn die Website die Anerkennung bereits vermerkt (siehe Check unten).
+WEBSITE_URL = "https://patrickhilft.de"
+ENTLASTUNGSBETRAG_TOPIC = (
+    "Der Entlastungsbetrag der Pflegekasse - ein monatliches Budget, das viele verfallen lassen"
+)
+
+_entlastungsbetrag_cache: Optional[bool] = None
+
+
+def _entlastungsbetrag_freigeschaltet() -> bool:
+    """Prueft auf patrickhilft.de, ob die ADD-Anerkennung inzwischen vermerkt ist.
+
+    Sucht auf der Startseite nach den Begriffen "entlastungsbetrag" und "anerkannt"
+    (unabhaengig von Gross-/Kleinschreibung) - sobald Patrick die Website nach erhaltener
+    ADD-Anerkennung entsprechend aktualisiert, greift der Check automatisch. Faellt bei
+    jedem Fehler (Netzwerk, Timeout, Status != 200) sicher auf False zurueck: im Zweifel
+    wird das Thema NICHT vorgeschlagen, statt versehentlich eine noch nicht genehmigte
+    Leistung zu bewerben.
+    """
+    try:
+        response = requests.get(WEBSITE_URL, timeout=15)
+        response.raise_for_status()
+        text = response.text.lower()
+        return "entlastungsbetrag" in text and "anerkannt" in text
+    except Exception:
+        return False
+
+
+def _entlastungsbetrag_available() -> bool:
+    """Wie _entlastungsbetrag_freigeschaltet(), aber nur einmal pro Lauf abgefragt."""
+    global _entlastungsbetrag_cache
+    if _entlastungsbetrag_cache is None:
+        _entlastungsbetrag_cache = _entlastungsbetrag_freigeschaltet()
+    return _entlastungsbetrag_cache
+
+
+def _weekly_topic_pool() -> list:
+    if _entlastungsbetrag_available():
+        return WEEKLY_TOPICS + [ENTLASTUNGSBETRAG_TOPIC]
+    return WEEKLY_TOPICS
+
 
 # Zusaetzlich zum Thema rotiert die Darstellungsform. Damit fuehlt sich dasselbe Thema
 # beim naechsten Durchlauf anders an, statt wieder eine Leistungsaufzaehlung zu werden.
@@ -75,7 +121,8 @@ def _pick_weekly_topic(regenerating: bool) -> str:
     week = _current_week()
     if _topic_offset == 0 and week in SEASONAL_TOPICS:
         return SEASONAL_TOPICS[week]
-    return WEEKLY_TOPICS[(week + _topic_offset) % len(WEEKLY_TOPICS)]
+    pool = _weekly_topic_pool()
+    return pool[(week + _topic_offset) % len(pool)]
 
 
 def _pick_format() -> str:
@@ -105,13 +152,13 @@ OUTPUT_SCHEMA = {
 
 def _build_prompt(topic_hint: str, format_hint: str, feedback: Optional[str]) -> str:
     prompt = (
-        "Erstelle einen neuen Social-Media-Post-Entwurf f\u00fcr diese Woche.\n\n"
-        f"Das Thema f\u00fcr diesen Post ist fest vorgegeben:\n{topic_hint}\n\n"
-        f"Die Darstellungsform f\u00fcr diesen Post ist ebenfalls vorgegeben:\n{format_hint}\n\n"
+        "Erstelle einen neuen Social-Media-Post-Entwurf für diese Woche.\n\n"
+        f"Das Thema für diesen Post ist fest vorgegeben:\n{topic_hint}\n\n"
+        f"Die Darstellungsform für diesen Post ist ebenfalls vorgegeben:\n{format_hint}\n\n"
         "Schreibe konkret und lebendig zu genau diesem Thema und halte dich an die "
         "vorgegebene Darstellungsform. Bleib beim vorgegebenen Thema und weiche nicht "
         "automatisch auf Arzttermine oder Fahrdienste aus, wenn das Thema etwas anderes "
-        "vorgibt. Halte dich strikt an Tonalit\u00e4t und Format-Vorgaben aus dem Briefing."
+        "vorgibt. Halte dich strikt an Tonalität und Format-Vorgaben aus dem Briefing."
     )
     if feedback:
         prompt += (
