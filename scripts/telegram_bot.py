@@ -175,19 +175,18 @@ class TelegramBot:
         return None
 
 
-def approval_keyboard() -> dict:
-    return {
-        "inline_keyboard": [
-            [
-                {"text": "✅ Freigeben", "callback_data": "approve"},
-                {"text": "\U0001F504 Neu generieren", "callback_data": "regenerate"},
-                {"text": "❌ Abbrechen", "callback_data": "cancel"},
-            ]
-        ]
-    }
+def approval_keyboard(allow_regenerate: bool = True) -> dict:
+    buttons = [{"text": "✅ Freigeben", "callback_data": "approve"}]
+    if allow_regenerate:
+        buttons.append({"text": "\U0001F504 Neu generieren", "callback_data": "regenerate"})
+    buttons.append({"text": "❌ Abbrechen", "callback_data": "cancel"})
+    return {"inline_keyboard": [buttons]}
 
 
-def image_choice_keyboard() -> dict:
+def image_choice_keyboard(allow_regenerate: bool = True) -> dict:
+    second_row = [{"text": "\U0001F4E4 Eigenes Bild hochladen", "callback_data": "own_image"}]
+    if allow_regenerate:
+        second_row.append({"text": "\U0001F504 Neue Vorschläge", "callback_data": "regenerate_images"})
     return {
         "inline_keyboard": [
             [
@@ -195,10 +194,7 @@ def image_choice_keyboard() -> dict:
                 {"text": "2️⃣ Bild 2", "callback_data": "img_1"},
                 {"text": "3️⃣ Bild 3", "callback_data": "img_2"},
             ],
-            [
-                {"text": "\U0001F4E4 Eigenes Bild hochladen", "callback_data": "own_image"},
-                {"text": "\U0001F504 Neue Vorschläge", "callback_data": "regenerate_images"},
-            ],
+            second_row,
             [
                 {"text": "❌ Abbrechen", "callback_data": "cancel"},
             ],
