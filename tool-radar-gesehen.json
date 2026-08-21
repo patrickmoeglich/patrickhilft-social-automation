@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "letzter_lauf": "2026-08-21",
+  "eintraege": [
+    {
+      "name": "Docling MCP",
+      "quelle": "GitHub",
+      "url": "https://github.com/docling-project/docling-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-19",
+      "bewertung": 8,
+      "cluster": [
+        "dokumente",
+        "buchhaltung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Lokale PDF/Scan-Strukturierung, MIT, LF AI & Data / IBM Research, 712 Sterne."
+    },
+    {
+      "name": "Anthropic Skill brand-guidelines",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 8,
+      "cluster": [
+        "content",
+        "leadgen"
+      ],
+      "status": "gemeldet",
+      "notiz": "Markenprofil pro Agenturkunde."
+    },
+    {
+      "name": "Anthropic Skill mcp-builder",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 7,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Strukturierter Bau eigener MCP-Server."
+    },
+    {
+      "name": "PaperlessMCP",
+      "quelle": "GitHub",
+      "url": "https://github.com/barryw/PaperlessMCP",
+      "datum": "2026-08-21",
+      "stand": "2026-07-31",
+      "bewertung": 6,
+      "cluster": [
+        "dokumente",
+        "buchhaltung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Braucht laufendes Paperless-ngx. MIT, 37 Sterne."
+    },
+    {
+      "name": "deutsche-rechtsprechung-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/floleuerer/deutsche-rechtsprechung-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-16",
+      "bewertung": 5,
+      "cluster": [
+        "dokumente",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Amtliche Rechtsprechung. Genau an der Schwelle."
+    },
+    {
+      "name": "Claude Code self-hosted-runner",
+      "quelle": "Anthropic Release Notes",
+      "url": "https://code.claude.com/docs/en/whats-new/2026-w32",
+      "datum": "2026-08-21",
+      "stand": "2026-08-07",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: nur Team-/Enterprise-Plan."
+    },
+    {
+      "name": "Claude Code cross-session messaging",
+      "quelle": "Anthropic Release Notes",
+      "url": "https://code.claude.com/docs/en/whats-new/2026-w32",
+      "datum": "2026-08-21",
+      "stand": "2026-08-07",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: nur macOS/Linux, Patrick ist auf Windows."
+    },
+    {
+      "name": "nikolausm/mcp-sevdesk",
+      "quelle": "GitHub",
+      "url": "https://github.com/nikolausm/mcp-sevdesk",
+      "datum": "2026-08-21",
+      "stand": "2026-07-06",
+      "bewertung": 0,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: sevdesk-MCP bereits im Einsatz."
+    },
+    {
+      "name": "Apify Google Maps Lead Scraper",
+      "quelle": "Web/Apify",
+      "url": "https://apify.com/godberry/google-maps-leads-scraper",
+      "datum": "2026-08-21",
+      "stand": "2026-08-01",
+      "bewertung": 0,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostet, kostenpflichtig, Leaddaten gehen raus, UWG-Frage. Leadfinder deckt es ab."
+    },
+    {
+      "name": "Scrap.io MCP",
+      "quelle": "Web",
+      "url": "https://scrap.io/",
+      "datum": "2026-08-21",
+      "stand": "2026-08-01",
+      "bewertung": 0,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostet und kostenpflichtig."
+    },
+    {
+      "name": "MyMedi-AI MCP",
+      "quelle": "awesome-mcp-servers",
+      "url": "https://github.com/MyMedi-AI/mymedi-ai-mcp-server",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: US-Kodierung ICD-10/CPT/HCPCS, kein Bezug zu deutschen Pflegekassen."
+    },
+    {
+      "name": "Medical Terminologies MCP",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 2,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "zu_schwach",
+      "notiz": "ICD-11/SNOMED/RxNorm - Klinikkodierung, nicht Assistenz."
+    },
+    {
+      "name": "SIMOSphere AI",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostete Plattform, Kundendaten muessten raus."
+    },
+    {
+      "name": "reportflow-mcp",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Rechnungs-PDFs - sevdesk macht das besser."
+    },
+    {
+      "name": "deutsche-gesetze-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/floleuerer/deutsche-gesetze-mcp",
+      "datum": "2026-08-21",
+      "stand": "2025-12-19",
+      "bewertung": 0,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: letzter Commit 19.12.2025, ueber 6 Monate ohne Pflege."
+    },
+    {
+      "name": "gesetze-verwaltungsvorschriften-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/inooLabs/gesetze-verwaltungsvorschriften-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-01-14",
+      "bewertung": 0,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: letzter Commit 14.01.2026, ueber 6 Monate ohne Pflege."
+    },
+    {
+      "name": "rechtsinformationen-bund-de-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/wolfgangihloff/rechtsinformationen-bund-de-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-06-26",
+      "bewertung": 4,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Ueberschneidet sich mit deutsche-rechtsprechung-mcp, aber ohne Lizenz."
+    },
+    {
+      "name": "dguastaf/paperless-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/dguastaf/paperless-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-13",
+      "bewertung": 3,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "zu_schwach",
+      "notiz": "0 Sterne, keine Lizenz. PaperlessMCP ist die bessere Wahl."
+    },
+    {
+      "name": "elster-mcp-server",
+      "quelle": "GitHub",
+      "url": "https://github.com/lukasschwarz/elster-mcp-server",
+      "datum": "2026-08-21",
+      "stand": "2026-07-13",
+      "bewertung": 6,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "Puppeteer-Steuerung mit echten ELSTER-Zugangsdaten, 7 Sterne, keine amtliche Rueckendeckung, ToS unklar. Bei laufender DRV-Pruefung kein akzeptables Risiko. Nicht erneut melden.",
+      "dauersperre": true
+    },
+    {
+      "name": "Anthropic Skill frontend-design",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 7,
+      "cluster": [
+        "content",
+        "leadgen"
+      ],
+      "status": "gemeldet",
+      "notiz": "Eigenstaendige Web-Gestaltung statt Baukasten-Optik. Fuer Kundenseiten der B2B-Agentur.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill doc-coauthoring",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/doc-coauthoring/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 7,
+      "cluster": [
+        "dokumente",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Gefuehrter Ablauf fuer lange Dokumente inkl. Gegenlesen. Traegerkonzept, Businessplan, Foerderantrag.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill canvas-design",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/canvas-design/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 6,
+      "cluster": [
+        "content"
+      ],
+      "status": "gemeldet",
+      "notiz": "Poster und Grafiken als PNG/PDF. Ueberschneidet sich teilweise mit der bestehenden Bildpipeline.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill skill-creator",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 6,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Baut und misst Skills, optimiert die description auf zuverlaessiges Ausloesen.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill webapp-testing",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/webapp-testing/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 5,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Playwright gegen lokale Webanwendungen. Nur 5, weil Chrome-DevTools-MCP einen Teil abdeckt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill internal-comms",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/internal-comms/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [
+        "content"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: 3P-Updates, Newsletter, Leadership - setzt ein Team voraus.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill academy-guide",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/academy-guide/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: kein Geschaeftsnutzen.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill slack-gif-creator",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/slack-gif-creator/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: kein Geschaeftsnutzen, dazu kein Slack im Stack.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill theme-factory",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/theme-factory/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 4,
+      "cluster": [
+        "content"
+      ],
+      "status": "zu_schwach",
+      "notiz": "brand-guidelines deckt Kunden-Branding besser ab.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill web-artifacts-builder",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/web-artifacts-builder/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 4,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Zielt auf claude.ai-Artifacts statt auf den Cloudflare-Stack.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skills: docx/xlsx/pdf",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 9,
+      "cluster": [
+        "dokumente",
+        "content",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Offizielle Skills fuer Word/Excel/PDF. Lokal. pptx (5/10) gehoert zur selben Office-Familie und laeuft hier mit, statt als eigener Treffer Fuellmaterial zu sein.",
+      "dauersperre": false
+    }
+  ]
+}

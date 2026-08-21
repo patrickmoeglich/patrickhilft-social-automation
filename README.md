@@ -406,3 +406,59 @@ Vorlage/Vorschau, die man hochladen oder dem Kunden präsentieren kann.
 - `.env` ist in `.gitignore` und wird nie committet.
 - Der Ocoya-API-Key erlaubt server-seitigen Zugriff auf deinen Workspace —
   wie jeden API-Key nicht in Client-Code oder öffentlichen Repos verwenden.
+
+## Tool-Radar (wöchentliche Suche nach neuen MCP-Servern und Skills)
+
+Sucht montags neue MCP-Server, Claude Skills und vergleichbare Erweiterungen,
+filtert sie hart auf die eigenen Projekte und meldet die Treffer per Telegram.
+
+**Wo was liegt**
+
+| Datei | Zweck |
+|---|---|
+| `skills/tool-radar/SKILL.md` | Quellen, Filterlogik, Ablauf — **versionierte Quelle der Wahrheit** |
+| `scripts/tool_radar.py` | Gedächtnis (`pruefe`/`merke`) und Telegram-Versand |
+| `scripts/test_tool_radar.py` | Tests, inklusive Drift-Prüfung der beiden Skill-Fassungen |
+| `scripts/tool_radar_montagslauf.cmd` | Wrapper für die Aufgabenplanung, schreibt `logs/tool-radar.log` |
+| `tool-radar-gesehen.json` | Was schon gemeldet oder verworfen wurde |
+
+**Die zwei Skill-Fassungen**
+
+Claude Code lädt Skills nur aus `~/.claude/skills/`. Diese Fassung ist eine
+**Kopie**; die versionierte unter `skills/tool-radar/SKILL.md` ist maßgeblich.
+Kein Symlink, weil das Repo unter OneDrive liegt und OneDrive Links beim Sync
+zerlegt. Nach jeder Änderung abgleichen:
+
+```cmd
+copy /Y "skills\tool-radar\SKILL.md" "%USERPROFILE%\.claude\skills\tool-radar\SKILL.md"
+```
+
+`test_skill_im_repo_und_im_home_sind_synchron` schlägt an, sobald die beiden
+auseinanderlaufen. Auf einem Rechner ohne installierten Skill wird der Test
+übersprungen.
+
+**Montagslauf**
+
+Windows-Aufgabe `ToolRadarMontag`, montags 07:00, ruft
+`scripts\tool_radar_montagslauf.cmd` auf. Der Aufruf lautet
+`claude -p "/tool-radar headless"` — **das Argument `headless` ist zwingend**,
+sonst fragt der Lauf nach Freigabe und endet ergebnislos.
+
+Weil headless keine Berechtigung erfragen kann, stehen die Quell-Domains als
+`--allowedTools` im Wrapper — bewusst dort und nicht in `~/.claude/settings.json`,
+damit interaktive Sessions weiter nachfragen. Die Liste spiegelt den Block
+zwischen `domains:start` und `domains:end` in `skills/tool-radar/SKILL.md`; wird
+eine Quelle geändert, muss beides mit. `test_domains_in_skill_und_wrapper_sind_synchron`
+schlägt sonst an.
+
+```cmd
+schtasks /Query  /TN "ToolRadarMontag" /FO LIST   :: Status ansehen
+schtasks /Change /TN "ToolRadarMontag" /DISABLE   :: pausieren
+schtasks /Change /TN "ToolRadarMontag" /ENABLE    :: wieder anschalten
+schtasks /Run    /TN "ToolRadarMontag"            :: sofort testen
+schtasks /Delete /TN "ToolRadarMontag" /F         :: dauerhaft entfernen
+```
+
+Voraussetzung: `TELEGRAM_BOT_TOKEN` und `TELEGRAM_CHAT_ID` müssen in `.env` mit
+**echten** Werten stehen. Stehen dort noch die Platzhalter aus `.env.example`,
+bricht der Lauf mit einer Klartextmeldung im Log ab statt mit einem Stacktrace.
