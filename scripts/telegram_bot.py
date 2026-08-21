@@ -27,12 +27,19 @@ class TelegramBot:
             raise RuntimeError(f"Telegram API error on {method}: {data}")
         return data["result"]
 
-    def send_message(self, text: str, reply_markup: Optional[dict] = None) -> int:
+    def send_message(
+        self,
+        text: str,
+        reply_markup: Optional[dict] = None,
+        parse_mode: Optional[str] = "HTML",
+    ) -> int:
+        # parse_mode=None schickt reinen Text. Noetig fuer Nachrichten mit vielen URLs:
+        # ein "&" in einem Link laesst Telegram die ganze HTML-Nachricht ablehnen.
         result = self._call(
             "sendMessage",
             chat_id=self.chat_id,
             text=text,
-            parse_mode="HTML",
+            parse_mode=parse_mode,
             reply_markup=reply_markup,
         )
         return result["message_id"]
