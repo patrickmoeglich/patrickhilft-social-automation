@@ -1,0 +1,130 @@
+name: Uebergabe aus KZ-Privat
+
+# Nimmt einen FERTIGEN Beitrag aus KZ-Privat entgegen, laesst ihn per Telegram
+# freigeben und plant ihn bei Ocoya ein.
+#
+# Ausdruecklich KEIN Erzeugen: Text und Bild kommen fertig herein. Der
+# woechentliche Workflow (weekly-post.yml) bleibt davon unberuehrt -- er
+# erzeugt weiterhin selbst und ist ein anderer Weg fuer einen anderen Zweck.
+#
+# Nur von Hand ausloesbar. Kein Zeitplan: Uebergeben wird, wenn KZ-Privat einen
+# Beitrag fertig hat, und das folgt keinem Kalender.
+
+on:
+  workflow_dispatch:
+    inputs:
+      kz_beitrag_id:
+        description: "KZ-Beitrags-ID (nur Ziffern) - steht sichtbar in der Telegram-Nachricht"
+        required: true
+        type: string
+      caption:
+        description: "Der fertige Beitragstext (ohne Hashtags)"
+        required: true
+        type: string
+      hashtags:
+        description: >-
+          Hashtags. Trenner Leerzeichen ODER Komma, Raute optional.
+          Beispiel: "pflege, alltagshilfe" oder "#pflege #alltagshilfe".
+          Leer lassen, wenn keine gewuenscht sind.
+        required: false
+        default: ""
+        type: string
+      bild_url:
+        description: >-
+          Oeffentliche https-Adresse des Bildes; Ocoya laedt es selbst herunter.
+          Muss mit https:// beginnen. Beispiel:
+          https://d3u0tzju9qaucj.cloudfront.net/<konto>/<bild>.png
+        required: true
+        type: string
+      plattformen:
+        description: >-
+          Logische Namen, kommagetrennt, klein geschrieben. Erlaubt sind genau:
+          facebook, instagram, linkedin, tiktok, x. Beispiel: "facebook" oder
+          "facebook,linkedin". KEINE Ocoya-Profil-IDs - die kommen aus Secrets.
+        required: true
+        type: string
+      scheduled_at:
+        description: >-
+          Zeitpunkt nach ISO-8601, MIT Zeitzonen-Versatz. Ohne Versatz wird
+          abgewiesen, weil 10:00 sonst Berliner Zeit oder UTC heissen koennte.
+          Beispiel Sommerzeit: 2026-09-02T10:00:00+02:00
+        required: true
+        type: string
+      ersetzt_ocoya_gruppe_id:
+        description: >-
+          Optional. Die postGroupId eines aelteren Ocoya-Entwurfs, den dieser
+          Beitrag inhaltlich ersetzt. NUR fuer die spaetere Zuordnung - dieser
+          Workflow loescht, plant und aendert daran NICHTS. Leer lassen, wenn es
+          keinen gibt.
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  uebergeben:
+    runs-on: ubuntu-latest
+    # Eine Wartephase (Freigabe) a POLL_TIMEOUT_MINUTES, plus Puffer. Deutlich
+    # kuerzer als weekly-post.yml, weil hier weder generiert noch Bilder
+    # ausgewaehlt werden.
+    timeout-minutes: 90
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhaengigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Netzfreie Pruefung
+        working-directory: scripts
+        # Laeuft vor jedem Netzaufruf: Ist die Uebergabe selbst kaputt, soll das
+        # auffallen, bevor eine Nachricht hinausgeht.
+        run: python test_uebergabe.py
+
+      - name: Beitrag freigeben lassen und einplanen
+        working-directory: scripts
+        env:
+          # --- Eingaben. Stehen im Klartext im Protokoll; deshalb hier NUR
+          # ---            Inhalt und logische Namen, niemals IDs.
+          KZ_BEITRAG_ID: ${{ inputs.kz_beitrag_id }}
+          CAPTION: ${{ inputs.caption }}
+          HASHTAGS: ${{ inputs.hashtags }}
+          BILD_URL: ${{ inputs.bild_url }}
+          PLATTFORMEN: ${{ inputs.plattformen }}
+          SCHEDULED_AT: ${{ inputs.scheduled_at }}
+          # Nur Dokumentation. Dieser Workflow fasst den genannten Entwurf nicht
+          # an -- er loescht ihn nicht, plant ihn nicht ein und aendert ihn nicht.
+          ERSETZT_OCOYA_GRUPPE_ID: ${{ inputs.ersetzt_ocoya_gruppe_id }}
+          # --- Zugaenge und Profil-IDs. Ausschliesslich aus Secrets.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OCOYA_API_KEY: ${{ secrets.OCOYA_API_KEY }}
+          OCOYA_WORKSPACE_ID: ${{ secrets.OCOYA_WORKSPACE_ID }}
+          # Je Plattform ein eigenes Secret. Gebraucht werden nur die, deren
+          # Name in PLATTFORMEN steht; fehlt eines, bricht das Skript ab und
+          # nennt die Plattform -- nie die ID.
+          OCOYA_PROFIL_FACEBOOK: ${{ secrets.OCOYA_PROFIL_FACEBOOK }}
+          OCOYA_PROFIL_INSTAGRAM: ${{ secrets.OCOYA_PROFIL_INSTAGRAM }}
+          OCOYA_PROFIL_LINKEDIN: ${{ secrets.OCOYA_PROFIL_LINKEDIN }}
+          OCOYA_PROFIL_TIKTOK: ${{ secrets.OCOYA_PROFIL_TIKTOK }}
+          OCOYA_PROFIL_X: ${{ secrets.OCOYA_PROFIL_X }}
+          POLL_TIMEOUT_MINUTES: "60"
+        run: python uebergabe.py
+
+      - name: Ergebnis als Artefakt ablegen
+        # Auch wenn abgelehnt wurde oder das Zeitlimit griff: Die Entscheidung
+        # ist das Ergebnis, und KZ-Privat soll sie abholen koennen.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uebergabe-ergebnis
+          path: scripts/uebergabe-ergebnis.json
+          if-no-files-found: warn
+          retention-days: 30
