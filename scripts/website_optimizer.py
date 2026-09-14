@@ -34,7 +34,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
 
-MODEL = "claude-opus-4-8"
+MODEL = "claude-opus-5"
 REQUEST_TIMEOUT = 20
 USER_AGENT = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
@@ -192,8 +192,12 @@ def analyze(url: str, resp: requests.Response, elapsed: float, soup: BeautifulSo
     }
 
 
-def extract_content(soup: BeautifulSoup, base_url: str) -> dict:
+def extract_content(soup: BeautifulSoup, base_url: str, raw_html: str = "") -> dict:
     """Extrahiert die echten Inhalte der Seite als Baumaterial fuer das Redesign."""
+    # Skript-Adressen VOR dem Entfernen einsammeln — manche Seiten bauen ihre
+    # Bilder erst zur Laufzeit per JavaScript ein (z.B. Slideshows). Die tauchen
+    # dann im HTML nicht auf und wuerden dem Redesign fehlen.
+    script_urls = [urljoin(base_url, s["src"]) for s in soup.find_all("script", src=True)[:5]]
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
 
@@ -227,6 +231,39 @@ def extract_content(soup: BeautifulSoup, base_url: str) -> dict:
             entry["native_breite_px"], entry["native_hoehe_px"] = size
         else:
             entry["native_breite_px"], entry["native_hoehe_px"] = None, None
+
+    # Nachzuegler aufspueren: Bildpfade, die nur im Quelltext oder in
+    # Skriptdateien stehen (per JavaScript eingebaute Slideshows u.ae.).
+    # Aufgenommen wird nur, was sich tatsaechlich laden laesst.
+    bekannt = {e["url"] for e in image_urls}
+    quellen = [raw_html] if raw_html else []
+    for script_url in script_urls:
+        try:
+            r = requests.get(script_url, timeout=REQUEST_TIMEOUT, headers={"User-Agent": USER_AGENT})
+            if r.ok and len(r.text) <= 200_000:
+                quellen.append(r.text)
+        except requests.RequestException:
+            continue
+    muster = re.compile(r"""["'(=]\s*([^"'()<>\s]+?\.(?:jpe?g|png|webp|gif))\b""", re.I)
+    kandidaten = []
+    for quelle in quellen:
+        for pfad in muster.findall(quelle):
+            url = urljoin(base_url, pfad)
+            if url not in bekannt and url not in kandidaten:
+                kandidaten.append(url)
+    for url in kandidaten[:25]:
+        if len(image_urls) >= 20:
+            break
+        size = native_image_size(url)
+        if size:
+            image_urls.append({
+                "url": url,
+                "alt": "",
+                "native_breite_px": size[0],
+                "native_hoehe_px": size[1],
+                "hinweis": "per JavaScript nachgeladen, nicht im HTML",
+            })
+            bekannt.add(url)
 
     text = re.sub(r"\n{3,}", "\n\n", soup.get_text("\n", strip=True))
 
@@ -393,7 +430,7 @@ def main() -> int:
     audit = analyze(url, resp, elapsed, soup)
     css_excerpt = fetch_css_snippets(soup, resp.url)
     html_excerpt = resp.text[:MAX_HTML_CHARS]
-    content = extract_content(BeautifulSoup(resp.text, "html.parser"), resp.url)
+    content = extract_content(BeautifulSoup(resp.text, "html.parser"), resp.url, resp.text)
 
     client = anthropic.Anthropic()
     domain = urlparse(resp.url).netloc.replace("www.", "")
@@ -401,19 +438,28 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("3/4  Claude bewertet Design, Geschwindigkeit und SEO (Bericht) ...")
-    report = generate_report(client, audit, html_excerpt, css_excerpt)
-    report_path = out_dir / "bericht.md"
-    report_path.write_text(report, encoding="utf-8")
-    print(f"     Bericht gespeichert: {report_path}")
+    try:
+        report = generate_report(client, audit, html_excerpt, css_excerpt)
+        report_path = out_dir / "bericht.md"
+        report_path.write_text(report, encoding="utf-8")
+        print(f"     Bericht gespeichert: {report_path}")
 
-    if not args.nur_analyse:
-        print("4/4  Claude baut die optimierte neue Version der Webseite ...")
-        redesign = generate_redesign(client, audit, content, report)
-        redesign_path = out_dir / "neue-webseite.html"
-        redesign_path.write_text(redesign, encoding="utf-8")
-        print(f"     Neue Webseite gespeichert: {redesign_path}")
-    else:
-        print("4/4  Uebersprungen (--nur-analyse)")
+        if not args.nur_analyse:
+            print("4/4  Claude baut die optimierte neue Version der Webseite ...")
+            redesign = generate_redesign(client, audit, content, report)
+            redesign_path = out_dir / "neue-webseite.html"
+            redesign_path.write_text(redesign, encoding="utf-8")
+            print(f"     Neue Webseite gespeichert: {redesign_path}")
+        else:
+            print("4/4  Uebersprungen (--nur-analyse)")
+    except Exception:
+        import traceback
+        fehler = traceback.format_exc()
+        fehler_path = out_dir / "fehler.txt"
+        fehler_path.write_text(fehler, encoding="utf-8")
+        print("\n" + fehler)
+        print(f"FEHLER beim Claude-Aufruf. Details gespeichert in: {fehler_path}")
+        return 1
 
     print("\nFertig! Ergebnisse liegen in:")
     print(f"  {out_dir}")
