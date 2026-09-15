@@ -1,0 +1,819 @@
+{
+  "version": 1,
+  "letzter_lauf": "2026-09-07",
+  "eintraege": [
+    {
+      "name": "Docling MCP",
+      "quelle": "GitHub",
+      "url": "https://github.com/docling-project/docling-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-19",
+      "bewertung": 8,
+      "cluster": [
+        "dokumente",
+        "buchhaltung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Lokale PDF/Scan-Strukturierung, MIT, LF AI & Data / IBM Research, 712 Sterne."
+    },
+    {
+      "name": "Anthropic Skill brand-guidelines",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 8,
+      "cluster": [
+        "content",
+        "leadgen"
+      ],
+      "status": "gemeldet",
+      "notiz": "Markenprofil pro Agenturkunde."
+    },
+    {
+      "name": "Anthropic Skill mcp-builder",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 7,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Strukturierter Bau eigener MCP-Server."
+    },
+    {
+      "name": "PaperlessMCP",
+      "quelle": "GitHub",
+      "url": "https://github.com/barryw/PaperlessMCP",
+      "datum": "2026-08-21",
+      "stand": "2026-07-31",
+      "bewertung": 6,
+      "cluster": [
+        "dokumente",
+        "buchhaltung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Braucht laufendes Paperless-ngx. MIT, 37 Sterne."
+    },
+    {
+      "name": "deutsche-rechtsprechung-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/floleuerer/deutsche-rechtsprechung-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-16",
+      "bewertung": 5,
+      "cluster": [
+        "dokumente",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Amtliche Rechtsprechung. Genau an der Schwelle."
+    },
+    {
+      "name": "Claude Code self-hosted-runner",
+      "quelle": "Anthropic Release Notes",
+      "url": "https://code.claude.com/docs/en/whats-new/2026-w32",
+      "datum": "2026-08-21",
+      "stand": "2026-08-07",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: nur Team-/Enterprise-Plan."
+    },
+    {
+      "name": "nikolausm/mcp-sevdesk",
+      "quelle": "GitHub",
+      "url": "https://github.com/nikolausm/mcp-sevdesk",
+      "datum": "2026-08-21",
+      "stand": "2026-07-06",
+      "bewertung": 0,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: sevdesk-MCP bereits im Einsatz."
+    },
+    {
+      "name": "Apify Google Maps Lead Scraper",
+      "quelle": "Web/Apify",
+      "url": "https://apify.com/godberry/google-maps-leads-scraper",
+      "datum": "2026-08-21",
+      "stand": "2026-08-01",
+      "bewertung": 0,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostet, kostenpflichtig, Leaddaten gehen raus, UWG-Frage. Leadfinder deckt es ab."
+    },
+    {
+      "name": "Scrap.io MCP",
+      "quelle": "Web",
+      "url": "https://scrap.io/",
+      "datum": "2026-08-21",
+      "stand": "2026-08-01",
+      "bewertung": 0,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostet und kostenpflichtig."
+    },
+    {
+      "name": "MyMedi-AI MCP",
+      "quelle": "awesome-mcp-servers",
+      "url": "https://github.com/MyMedi-AI/mymedi-ai-mcp-server",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: US-Kodierung ICD-10/CPT/HCPCS, kein Bezug zu deutschen Pflegekassen."
+    },
+    {
+      "name": "Medical Terminologies MCP",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 2,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "zu_schwach",
+      "notiz": "ICD-11/SNOMED/RxNorm - Klinikkodierung, nicht Assistenz."
+    },
+    {
+      "name": "SIMOSphere AI",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostete Plattform, Kundendaten muessten raus."
+    },
+    {
+      "name": "reportflow-mcp",
+      "quelle": "Smithery",
+      "url": "https://smithery.ai/",
+      "datum": "2026-08-21",
+      "stand": "2026-07-01",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Rechnungs-PDFs - sevdesk macht das besser."
+    },
+    {
+      "name": "deutsche-gesetze-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/floleuerer/deutsche-gesetze-mcp",
+      "datum": "2026-08-21",
+      "stand": "2025-12-19",
+      "bewertung": 0,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: letzter Commit 19.12.2025, ueber 6 Monate ohne Pflege."
+    },
+    {
+      "name": "gesetze-verwaltungsvorschriften-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/inooLabs/gesetze-verwaltungsvorschriften-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-01-14",
+      "bewertung": 0,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: letzter Commit 14.01.2026, ueber 6 Monate ohne Pflege."
+    },
+    {
+      "name": "rechtsinformationen-bund-de-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/wolfgangihloff/rechtsinformationen-bund-de-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-06-26",
+      "bewertung": 4,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Ueberschneidet sich mit deutsche-rechtsprechung-mcp, aber ohne Lizenz."
+    },
+    {
+      "name": "dguastaf/paperless-mcp",
+      "quelle": "GitHub",
+      "url": "https://github.com/dguastaf/paperless-mcp",
+      "datum": "2026-08-21",
+      "stand": "2026-08-13",
+      "bewertung": 3,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "zu_schwach",
+      "notiz": "0 Sterne, keine Lizenz. PaperlessMCP ist die bessere Wahl."
+    },
+    {
+      "name": "elster-mcp-server",
+      "quelle": "GitHub",
+      "url": "https://github.com/lukasschwarz/elster-mcp-server",
+      "datum": "2026-08-21",
+      "stand": "2026-07-13",
+      "bewertung": 6,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "Puppeteer-Steuerung mit echten ELSTER-Zugangsdaten, 7 Sterne, keine amtliche Rueckendeckung, ToS unklar. Bei laufender DRV-Pruefung kein akzeptables Risiko. Nicht erneut melden.",
+      "dauersperre": true
+    },
+    {
+      "name": "Anthropic Skill doc-coauthoring",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/doc-coauthoring/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 7,
+      "cluster": [
+        "dokumente",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Gefuehrter Ablauf fuer lange Dokumente inkl. Gegenlesen. Traegerkonzept, Businessplan, Foerderantrag.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill canvas-design",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/canvas-design/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 6,
+      "cluster": [
+        "content"
+      ],
+      "status": "gemeldet",
+      "notiz": "Poster und Grafiken als PNG/PDF. Ueberschneidet sich teilweise mit der bestehenden Bildpipeline.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill skill-creator",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 6,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Baut und misst Skills, optimiert die description auf zuverlaessiges Ausloesen.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill webapp-testing",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/webapp-testing/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 5,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Playwright gegen lokale Webanwendungen. Nur 5, weil Chrome-DevTools-MCP einen Teil abdeckt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill internal-comms",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/internal-comms/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [
+        "content"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: 3P-Updates, Newsletter, Leadership - setzt ein Team voraus.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill academy-guide",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/academy-guide/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: kein Geschaeftsnutzen.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill slack-gif-creator",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/slack-gif-creator/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: kein Geschaeftsnutzen, dazu kein Slack im Stack.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill theme-factory",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/theme-factory/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 4,
+      "cluster": [
+        "content"
+      ],
+      "status": "zu_schwach",
+      "notiz": "brand-guidelines deckt Kunden-Branding besser ab.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill web-artifacts-builder",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/web-artifacts-builder/SKILL.md",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 4,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Zielt auf claude.ai-Artifacts statt auf den Cloudflare-Stack.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skills: docx/xlsx/pdf",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "datum": "2026-08-21",
+      "stand": "2026-08-18",
+      "bewertung": 9,
+      "cluster": [
+        "dokumente",
+        "content",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Offizielle Skills fuer Word/Excel/PDF. Lokal. pptx (5/10) gehoert zur selben Office-Familie und laeuft hier mit, statt als eigener Treffer Fuellmaterial zu sein.",
+      "dauersperre": false
+    },
+    {
+      "name": "Adeu",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/dealfluence/adeu",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 7,
+      "cluster": [
+        "dokumente",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "DOCX-Redlining mit echter Aenderungsverfolgung. MIT, Dealfluence, 149 Sterne, laeuft lokal. Ergaenzt den docx-Skill: der schreibt neu, Adeu redigiert fremde Dokumente.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code cross-session messaging",
+      "quelle": "Anthropic Release Notes",
+      "url": "https://code.claude.com/docs/en/whats-new/2026-w34",
+      "datum": "2026-08-24",
+      "stand": "2026-08-21",
+      "bewertung": 7,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Frueheres K.o. (nur macOS/Linux) ist weg: ab Woche 34 nativ unter Windows. Neu bewertet und gemeldet.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code /design",
+      "quelle": "Anthropic Release Notes",
+      "url": "https://code.claude.com/docs/en/whats-new/2026-w34",
+      "datum": "2026-08-24",
+      "stand": "2026-08-21",
+      "bewertung": 6,
+      "cluster": [
+        "content",
+        "leadgen"
+      ],
+      "status": "gemeldet",
+      "notiz": "Research Preview, Artboards fuer Kundenseiten. In Pro und Max enthalten. Entwuerfe liegen als Artefakt auf claude.ai, daher 0 Punkte bei lokal.",
+      "dauersperre": false
+    },
+    {
+      "name": "Germany Tenders MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/pipeworx-io/mcp-germany-tenders",
+      "datum": "2026-08-24",
+      "stand": "2026-08-04",
+      "bewertung": 6,
+      "cluster": [
+        "leadgen",
+        "pflege",
+        "vita-nova"
+      ],
+      "status": "gemeldet",
+      "notiz": "Amtliche Bekanntmachungen von oeffentlichevergabe.de, keyless. MIT, aber 0 Sterne und erst seit Juli 2026. Gehostetes Gateway pipeworx.io, selbst hostbar.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill discernment-nudge",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/tree/main/skills/discernment-nudge",
+      "datum": "2026-08-24",
+      "stand": "2026-08-17",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "zu_schwach",
+      "notiz": "Kein Cluster getroffen: haengt Rueckfragen an Antworten an, aendert Gespraechsstil statt Geschaeftsablauf.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill algorithmic-art",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/tree/main/skills/algorithmic-art",
+      "datum": "2026-08-24",
+      "stand": "2026-08-18",
+      "bewertung": 4,
+      "cluster": [
+        "content"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Generative p5.js-Kunst. Cluster Content formal getroffen, aber kein realistischer Bedarf fuer Pflege-Marke oder lokale B2B-Kunden. Stand-Datum aus dem Skills-Sammelstand geschaetzt.",
+      "dauersperre": false
+    },
+    {
+      "name": "CarePlanKit care-plans",
+      "quelle": "MCP-Registry",
+      "url": "https://careplankit.com/",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: US-Pflegeausbildung mit NANDA-Diagnosen, gehostet und teils kostenpflichtig. Kein Bezug zu deutscher Pflegedokumentation. Analog MyMedi-AI.",
+      "dauersperre": false
+    },
+    {
+      "name": "Germany Payments MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/junter1989k-ai/germany-payments-mcp",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Klarna und SEPA via Mollie fuer Agenten. Kein Shop vorhanden, sevdesk und Bank decken das ab.",
+      "dauersperre": false
+    },
+    {
+      "name": "Germany Logistics MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/junter1989k-ai/germany-logistics-mcp",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: Versandetiketten, kein Cluster getroffen. Es wird nichts verschickt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Pre-Trip Compliance Scanner",
+      "quelle": "MCP-Registry",
+      "url": "https://registry.modelcontextprotocol.io/",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 0,
+      "cluster": [],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: prueft Gesundheits-Werbetexte gegen US-Bundesstaatenrecht. Ohne Bezug zu HWG und UWG.",
+      "dauersperre": false
+    },
+    {
+      "name": "Peppol Status API",
+      "quelle": "MCP-Registry",
+      "url": "https://peppolstatus.com/mcp",
+      "datum": "2026-08-24",
+      "stand": "2026-08-24",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Marktbeobachtung des Peppol-Netzes, keine Rechnungsstellung. Fuer XRechnung und ZUGFeRD in der Registry weiterhin nichts gefunden.",
+      "dauersperre": false
+    },
+    {
+      "name": "mcp-gsc (Google Search Console)",
+      "quelle": "awesome-mcp-servers",
+      "url": "https://github.com/AKzar1el/mcp-gsc",
+      "datum": "2026-09-07",
+      "stand": "2026-08-31",
+      "bewertung": 8,
+      "cluster": [
+        "leadgen",
+        "content"
+      ],
+      "status": "gemeldet",
+      "notiz": "17 Tools auf die Search Console, davon 12 read-only. MIT, self-hostbar auf eigenem Cloudflare Worker mit eigener Google-OAuth-App. Nur 5 Sterne, ein Maintainer. Gehosteter Zwilling digestseo.com ausdruecklich nicht gemeint.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code /skill-doctor",
+      "quelle": "Anthropic Changelog",
+      "url": "https://code.claude.com/docs/en/slash-commands",
+      "datum": "2026-09-07",
+      "stand": "2026-09-04",
+      "bewertung": 8,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Ab 2.1.252. Kontextkosten und Aufrufhaeufigkeit je Skill, markiert nie benutzte. Relevant wegen der vielen geladenen ecc-Skills. Laeuft auch unter -p.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code --permission-prompts none",
+      "quelle": "Anthropic Changelog",
+      "url": "https://code.claude.com/docs/en/cli-reference",
+      "datum": "2026-09-07",
+      "stand": "2026-09-02",
+      "bewertung": 7,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "gemeldet",
+      "notiz": "Ab 2.1.259. Fuer den Montagslauf. Aendert das heutige Verhalten nicht - dieser Lauf hat eine nicht freigegebene Domain auch ohne den Schalter abgelehnt -, macht es aber verbindlich.",
+      "dauersperre": false
+    },
+    {
+      "name": "LeadAce",
+      "quelle": "awesome-mcp-servers",
+      "url": "https://github.com/aitit-inc/leadace",
+      "datum": "2026-09-07",
+      "stand": "2026-09-06",
+      "bewertung": 4,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Automatisches Kaltakquise-Mailing und Kontaktformular-Versand. Kernproblem ist nicht die Technik: B2B-Werbemail ohne vorherige Einwilligung faellt unter Paragraph 7 UWG. Dazu Supabase statt Neon, ganzer Self-Hosting-Stack noetig, 2 Sterne, modifizierte Apache-Lizenz.",
+      "dauersperre": false
+    },
+    {
+      "name": "vigotime tools",
+      "quelle": "MCP-Registry",
+      "url": "https://vigotime.com/de/mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-08-17",
+      "bewertung": 4,
+      "cluster": [
+        "pflege",
+        "vita-nova"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Freie deutsche Arbeitszeit-Rechner (Brueckentage, Nettoarbeitszeit, Personalbemessung/PeBeM), ohne Auth, es gehen nur Parameter raus. Cluster getroffen, aber gehostet (0 Punkte lokal), kein Anschluss an den Stack, und der Hauptnutzen laege bei Vita Nova - das ruht seit Mitte Juli. Nicht verifiziert: vigotime.com steht nicht in der Domainliste, der Abruf wurde abgelehnt. Bewertung stuetzt sich nur auf den Registry-Eintrag.",
+      "dauersperre": false
+    },
+    {
+      "name": "Entyrix MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/juliusgerman/entyrix-mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-08-12",
+      "bewertung": 4,
+      "cluster": [
+        "leadgen"
+      ],
+      "status": "zu_schwach",
+      "notiz": "KYB-Daten aus 23 europaeischen Handelsregistern. Fuer Bonitaetspruefung denkbar, aber Patricks lokale B2B-Kunden sind Kleinbetriebe - der Aufwand steht nicht dafuer.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code /diff",
+      "quelle": "Anthropic Changelog",
+      "url": "https://code.claude.com/docs/en/changelog",
+      "datum": "2026-09-07",
+      "stand": "2026-09-03",
+      "bewertung": 4,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Zeigt uncommittete Aenderungen im Vollbild neben dem Gespraech. Bequemlichkeit, kein Ablauf.",
+      "dauersperre": false
+    },
+    {
+      "name": "German Newsfeed MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/Jakolo121/german-newsfeed-mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-08-10",
+      "bewertung": 3,
+      "cluster": [
+        "content"
+      ],
+      "status": "zu_schwach",
+      "notiz": "tagesschau.de-API inklusive ARD-Regionalnachrichten. Fuer Social-Media-Aufhaenger denkbar, aber ueberregionale Nachrichten passen weder zu Pflege noch zum Wonnegau.",
+      "dauersperre": false
+    },
+    {
+      "name": "Invoice & Receipt OCR Extractor",
+      "quelle": "MCP-Registry",
+      "url": "https://registry.modelcontextprotocol.io/",
+      "datum": "2026-09-07",
+      "stand": "2026-08-31",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Beleg-OCR, gehostet. Docling MCP macht das lokal, sevdesk-MCP deckt den Rest ab.",
+      "dauersperre": false
+    },
+    {
+      "name": "Yaktool Invoice",
+      "quelle": "MCP-Registry",
+      "url": "https://registry.modelcontextprotocol.io/",
+      "datum": "2026-09-07",
+      "stand": "2026-08-26",
+      "bewertung": 2,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "zu_schwach",
+      "notiz": "Prueft Rechnungs-Pflichtangaben. sevdesk erzeugt die Rechnungen bereits regelkonform.",
+      "dauersperre": false
+    },
+    {
+      "name": "eInvoiceWiz",
+      "quelle": "MCP-Registry",
+      "url": "https://einvoicewiz.com/mcp-server",
+      "datum": "2026-09-07",
+      "stand": "2026-09-01",
+      "bewertung": 0,
+      "cluster": [
+        "buchhaltung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostet unter einvoicewiz.com, Rechnungsdaten mit Kundennamen und Betraegen muessten raus, und sevdesk erzeugt XRechnung und ZUGFeRD bereits. Kein Repository, Credit-Modell. Damit ist die Luecke aus dem Lauf vom 24.08. formal gefuellt, aber nicht brauchbar.",
+      "dauersperre": false
+    },
+    {
+      "name": "vigotime planner",
+      "quelle": "MCP-Registry",
+      "url": "https://developer.vigotime.com",
+      "datum": "2026-09-07",
+      "stand": "2026-08-17",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostete Dienstplanung mit API-Key/OAuth. Echte Dienstplaene sind Personendaten und muessten zum Anbieter. Patrick hat kein Team, das das rechtfertigt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Care Home Scheduling",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/CSOAI-ORG/care-home-scheduling-mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-09-05",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: britische Domiziliar-Optiker-Terminplanung im CQC-Rahmen. Kein Bezug zu SGB XI. Analog MyMedi-AI und CarePlanKit.",
+      "dauersperre": false
+    },
+    {
+      "name": "Domiciliary Care MCP",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/CSOAI-ORG/domiciliary-care-mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-09-05",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: Compliance-Pruefung gegen die britische Care Quality Commission. Deutsche Pflegeaufsicht und MDK arbeiten nach anderen Massstaeben.",
+      "dauersperre": false
+    },
+    {
+      "name": "CareClinic Health Tracker",
+      "quelle": "MCP-Registry",
+      "url": "https://registry.modelcontextprotocol.io/",
+      "datum": "2026-09-07",
+      "stand": "2026-09-04",
+      "bewertung": 0,
+      "cluster": [
+        "pflege"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: gehostete App fuer Selbsttracking von Symptomen und Stimmung. Endnutzer-Werkzeug, kein Betriebsablauf.",
+      "dauersperre": false
+    },
+    {
+      "name": "Bizmoon Regulatory",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/uofuonye/bizmoon-plugins",
+      "datum": "2026-09-07",
+      "stand": "2026-09-05",
+      "bewertung": 0,
+      "cluster": [
+        "dokumente"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: US-Bundes- und Landesrecht sowie US-Foerderprogramme.",
+      "dauersperre": false
+    },
+    {
+      "name": "BorealHost",
+      "quelle": "MCP-Registry",
+      "url": "https://github.com/alainsvrd/borealhost-mcp",
+      "datum": "2026-09-07",
+      "stand": "2026-09-06",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: agentengesteuertes Webhosting mit DNS. Cloudflare macht das bereits, ein zweiter Hoster waere ein Rueckschritt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Claude Code managedMcpServers",
+      "quelle": "Anthropic Changelog",
+      "url": "https://code.claude.com/docs/en/changelog",
+      "datum": "2026-09-07",
+      "stand": "2026-09-02",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o.: Managed Setting, das eine Organisation voraussetzt.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill frontend-design",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      "datum": "2026-09-07",
+      "stand": "2026-09-03",
+      "bewertung": 7,
+      "cluster": [
+        "content",
+        "leadgen"
+      ],
+      "status": "gemeldet",
+      "notiz": "Update am 03.09.2026 (PR 1713): vermeidet generische Design-Voreinstellungen. Verbessert die bereits am 21.08. gemeldete Faehigkeit, schafft keine neue - deshalb nicht erneut gemeldet.",
+      "dauersperre": false
+    },
+    {
+      "name": "Anthropic Skill claude-api",
+      "quelle": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills/tree/main/skills/claude-api",
+      "datum": "2026-09-07",
+      "stand": "2026-09-01",
+      "bewertung": 0,
+      "cluster": [
+        "automatisierung"
+      ],
+      "status": "ausgeschlossen",
+      "notiz": "K.o. unveraendert: bereits installiert und aktiv. Update vom 01.09.2026 betrifft Fable 5.1 und Managed Agents und kommt automatisch mit.",
+      "dauersperre": false
+    }
+  ]
+}

@@ -17,3 +17,6 @@ website_optimierung/
 
 # Testbilder aus scripts/test_image_style.py - nicht committen.
 test_output/
+
+# Laufprotokoll des Tool-Radars (Laufzeitausgabe) - nicht committen.
+logs/

@@ -56,7 +56,12 @@ class BotAttrappe:
         self.wartezeiten: List[int] = []
         self.letzte_tastatur: Optional[dict] = None
 
-    def send_message(self, text: str, reply_markup: Optional[dict] = None) -> int:
+    def send_message(
+        self,
+        text: str,
+        reply_markup: Optional[dict] = None,
+        parse_mode: Optional[str] = "HTML",
+    ) -> int:
         self.gesendet.append(text)
         if reply_markup is not None:
             self.letzte_tastatur = reply_markup
