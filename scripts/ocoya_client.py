@@ -76,7 +76,7 @@ class OcoyaClient:
         body = {"caption": caption, "socialProfileIds": social_profile_ids}
         if media_urls:
             body["mediaUrls"] = media_urls
-        return self._request("POST", "/post", params={"workspaceId": self.workspace_id}, json=body)
+        return self._request("POST", "/post", params={"brandId": self.workspace_id}, json=body)
 
     def schedule_post(self, post_id: str, scheduled_at_iso: str) -> dict:
         return self._request(
