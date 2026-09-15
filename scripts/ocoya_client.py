@@ -67,22 +67,22 @@ class OcoyaClient:
         raise RuntimeError(last_error or "Ocoya-Request fehlgeschlagen")
 
     def list_workspaces(self) -> list:
-        return self._request("GET", "/workspaces")
+        return self._request("GET", "/brands")
 
     def list_social_profiles(self) -> list:
-        return self._request("GET", "/social-profiles", params={"workspaceId": self.workspace_id})
+        return self._request("GET", "/social-profiles", params={"brandId": self.workspace_id})
 
     def create_draft_post(self, caption: str, social_profile_ids: List[str], media_urls: Optional[List[str]] = None) -> dict:
         body = {"caption": caption, "socialProfileIds": social_profile_ids}
         if media_urls:
             body["mediaUrls"] = media_urls
-        return self._request("POST", "/post", params={"workspaceId": self.workspace_id}, json=body)
+        return self._request("POST", "/post", params={"brandId": self.workspace_id}, json=body)
 
     def schedule_post(self, post_id: str, scheduled_at_iso: str) -> dict:
         return self._request(
             "PATCH",
             f"/post/{post_id}",
-            params={"workspaceId": self.workspace_id},
+            params={"brandId": self.workspace_id},
             json={"scheduledAt": scheduled_at_iso},
         )
 
