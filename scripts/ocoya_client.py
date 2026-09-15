@@ -70,7 +70,7 @@ class OcoyaClient:
         return self._request("GET", "/workspaces")
 
     def list_social_profiles(self) -> list:
-        return self._request("GET", "/social-profiles", params={"workspaceId": self.workspace_id})
+        return self._request("GET", "/social-profiles", params={"brandId": self.workspace_id})
 
     def create_draft_post(self, caption: str, social_profile_ids: List[str], media_urls: Optional[List[str]] = None) -> dict:
         body = {"caption": caption, "socialProfileIds": social_profile_ids}
@@ -82,7 +82,7 @@ class OcoyaClient:
         return self._request(
             "PATCH",
             f"/post/{post_id}",
-            params={"workspaceId": self.workspace_id},
+            params={"brandId": self.workspace_id},
             json={"scheduledAt": scheduled_at_iso},
         )
 
