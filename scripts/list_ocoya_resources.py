@@ -38,7 +38,7 @@ def main() -> None:
     profiles = requests.get(
         f"{BASE_URL}/social-profiles",
         headers=headers,
-        params={"workspaceId": workspace_id},
+        params={"brandId": workspace_id},
         timeout=30,
     )
     profiles.raise_for_status()
