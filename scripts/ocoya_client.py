@@ -67,7 +67,7 @@ class OcoyaClient:
         raise RuntimeError(last_error or "Ocoya-Request fehlgeschlagen")
 
     def list_workspaces(self) -> list:
-        return self._request("GET", "/workspaces")
+        return self._request("GET", "/brands")
 
     def list_social_profiles(self) -> list:
         return self._request("GET", "/social-profiles", params={"brandId": self.workspace_id})
