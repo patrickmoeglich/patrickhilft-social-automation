@@ -5,9 +5,30 @@ import time
 from typing import List, Optional, Tuple
 
 import requests
+import truststore
+
+# Norton Web/Mail Shield bricht TLS auf und legt eigene Zertifikate vor. Windows
+# vertraut dessen Root, Pythons certifi nicht - ohne das hier scheitert JEDER
+# HTTPS-Aufruf mit CERTIFICATE_VERIFY_FAILED. Daran sind die Montagslaeufe vom
+# 31.08., 07.09. und 14.09.2026 gescheitert. truststore delegiert die Pruefung an
+# den Zertifikatsspeicher des Systems und wirkt prozessweit, also auch fuer die
+# Bild- und Dateidownloads weiter unten.
+truststore.inject_into_ssl()
 
 API_BASE = "https://api.telegram.org/bot{token}/{method}"
 FILE_BASE = "https://api.telegram.org/file/bot{token}/{file_path}"
+
+
+def _ohne_token(exc: Exception, kontext: str) -> Exception:
+    """Baut denselben Fehlertyp neu, aber ohne die URL - die traegt den Bot-Token.
+
+    requests nimmt die vollstaendige URL in seine Fehlermeldung auf, und bei
+    Telegram steht der Token im Pfad. Der Montagslauf leitet stderr in
+    logs/tool-radar.log - ein Netzfehler wuerde den Token dort im Klartext
+    ablegen. Der Typ bleibt erhalten, damit send_media_group seine Retry-Logik
+    und _ack_callback ihr Fehlerverhalten behalten.
+    """
+    return type(exc)(f"{kontext}: {type(exc).__name__} (URL unterdrueckt)")
 
 
 class TelegramBot:
@@ -22,12 +43,15 @@ class TelegramBot:
     def _call(self, method: str, **params) -> dict:
         url = API_BASE.format(token=self.token, method=method)
         payload = {key: value for key, value in params.items() if value is not None}
-        response = requests.post(url, json=payload, timeout=30)
         try:
-            data = response.json()
-        except ValueError:
-            response.raise_for_status()
-            raise
+            response = requests.post(url, json=payload, timeout=30)
+            try:
+                data = response.json()
+            except ValueError:
+                response.raise_for_status()
+                raise
+        except requests.RequestException as exc:
+            raise _ohne_token(exc, f"Telegram-Request {method}") from None
         if not data.get("ok"):
             raise RuntimeError(f"Telegram API error on {method}: {data}")
         return data["result"]
@@ -61,12 +85,15 @@ class TelegramBot:
 
     def _call_multipart(self, method: str, data: dict, files: dict) -> dict:
         url = API_BASE.format(token=self.token, method=method)
-        response = requests.post(url, data=data, files=files, timeout=120)
         try:
-            payload = response.json()
-        except ValueError:
-            response.raise_for_status()
-            raise
+            response = requests.post(url, data=data, files=files, timeout=120)
+            try:
+                payload = response.json()
+            except ValueError:
+                response.raise_for_status()
+                raise
+        except requests.RequestException as exc:
+            raise _ohne_token(exc, f"Telegram-Upload {method}") from None
         if not payload.get("ok"):
             raise RuntimeError(f"Telegram API error on {method}: {payload}")
         return payload["result"]
@@ -135,8 +162,11 @@ class TelegramBot:
 
     def download_file(self, file_path: str) -> bytes:
         url = FILE_BASE.format(token=self.token, file_path=file_path)
-        response = requests.get(url, timeout=60)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, timeout=60)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise _ohne_token(exc, "Telegram-Dateidownload") from None
         return response.content
 
     def wait_for_decision(self, message_id: int, timeout_seconds: int) -> Optional[str]:
